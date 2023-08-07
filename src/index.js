@@ -8,6 +8,7 @@ const IADD = require('./api/IADD');
 const UnitToken = require('./api/UnitToken');
 const EventSum = require('./api/EventSum');
 const DaoPluginManage=require("./api/DaoPluginManage")
+const ProxyAdmin=require('./api/ProxyAdmin')
 const daismAddress = require('./abi/address');
 
 class DaoApi {
@@ -19,6 +20,7 @@ class DaoApi {
         this.IADD.unsub();
         this.UnitToken.unsub();
         this.EventSum.unsub();
+        this.ProxyAdmin.unsub();
 
     } 
  
@@ -28,6 +30,7 @@ class DaoApi {
     get DaoLogo() { if (!this.dao_logo_obj) this.dao_logo_obj = new DaoLogo(this.web3, this.account,daismAddress[this.network]['DaoLogo']); return this.dao_logo_obj; }
     get DaoToken() { if (!this.dao_token_obj) this.dao_token_obj = new DaoToken(this.web3, this.account,daismAddress[this.network]['DaoToken']); return this.dao_token_obj; }
     get IADD() { if (!this.dao_iadd_obj) this.dao_iadd_obj = new IADD(this.web3, this.account,daismAddress[this.network]['_IADD']); return this.dao_iadd_obj; }
+    get ProxyAdmin() { if (!this.dao_proxy_obj) this.dao_proxy_obj = new ProxyAdmin(this.web3, this.account,daismAddress[this.network]['ProxyAdmin']); return this.dao_proxy_obj; }
     get UnitToken() { if (!this.dao_uToken_obj) this.dao_uToken_obj = new UnitToken(this.web3, this.account,daismAddress[this.network]['UnitToken']); return this.dao_uToken_obj; }
     get EventSum() { if (!this.dao_eventSum_obj) this.dao_eventSum_obj = new EventSum(this.web3, this.account,daismAddress[this.network]['EventHappenAddress']); return this.dao_eventSum_obj; }
     get DaoPluginManage() { if (!this.dao_plugn_obj) this.dao_plugn_obj = new DaoPluginManage(this.web3, this.account,daismAddress[this.network]['DaoPluginManage']); return this.dao_plugn_obj; }

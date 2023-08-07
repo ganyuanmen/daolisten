@@ -12,7 +12,7 @@ class IADD
         if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address, {from: this.account});
         this.u2tObj=this.contract.events.UnitTokenToDaoToken({filter: {},fromBlock: maxBlockNumber+1},
             async function (_error, data) {
-                if(!data || !data.returnValues) {utils.log("utokenTotokenEvent error");return;}
+                if(!data || !data.returnValues) {utils.log("utokenTotokenEvent error");throw _error;}
                 callbackFun.call(null,utils.valueFactory(data,{
                         "from": data.returnValues.spender, //兑换人
                         "to": data.returnValues.to, //目标人
@@ -20,7 +20,8 @@ class IADD
                         "tokenId":data.returnValues.id,
                         "utokenWei":data.returnValues.input_amount,
                         "tokenWei":data.returnValues.output_amount,
-                        "utoken":(parseFloat(_this.web3.utils.fromWei(data.returnValues.input_amount,'ether'))/(9995/10000)).toFixed(4),
+                        "utoken":(parseFloat(_this.web3.utils.fromWei(data.returnValues.input_amount,'ether'))/(998/1000)).toFixed(4),
+                      // "utoken":parseFloat(_this.web3.utils.fromWei(data.returnValues.input_amount,'ether')).toFixed(4),
                         "token":parseFloat(_this.web3.utils.fromWei(data.returnValues.output_amount,'ether')).toFixed(4)
                     },
                     "utokenTotokenEvent")
@@ -35,7 +36,7 @@ class IADD
         if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address, {from: this.account});
         this.t2uObj=this.contract.events.DaoTokenToUnitToken({filter: {}, fromBlock: maxBlockNumber+1}, 
             async function (_error, data) {  
-                if(!data || !data.returnValues) {utils.log("tokenToUtokenEvent error");return;}   
+                if(!data || !data.returnValues) {utils.log("tokenToUtokenEvent error");throw _error;}   
                 callbackFun.call(null,utils.valueFactory(data,
                     {
                         "from": data.returnValues.spender,
@@ -45,7 +46,8 @@ class IADD
                         "utokenWei":data.returnValues.output_amount,
                         "tokenWei":data.returnValues.input_amount,
                         "utoken":parseFloat(_this.web3.utils.fromWei(data.returnValues.output_amount,'ether')).toFixed(4),
-                        "token":(parseFloat(_this.web3.utils.fromWei(data.returnValues.input_amount,'ether'))/(9985/10000)).toFixed(4)
+                       // "token":(parseFloat(_this.web3.utils.fromWei(data.returnValues.input_amount,'ether'))/(9985/10000)).toFixed(4)
+                        "token":parseFloat(_this.web3.utils.fromWei(data.returnValues.input_amount,'ether')).toFixed(4)
                         // "token":parseFloat(_this.web3.utils.fromWei(data.returnValues.input_amount,'ether')).toFixed(4)
                     },
                     "tokenToUtokenEvent")
@@ -60,7 +62,7 @@ class IADD
         if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address, {from: this.account});
         this.t2tObj=this.ethtotokenObj=this.contract.events.ETHToDaoToken({filter: {}, fromBlock: maxBlockNumber+1},
             async function (_error, data) {  
-                if(!data || !data.returnValues) {utils.log("ETHToDaoToken error");return;}   
+                if(!data || !data.returnValues) {utils.log("ETHToDaoToken error");throw _error;}   
                 callbackFun.call(null,utils.valueFactory(data, 
                     {
                         "from": data.returnValues.spender,

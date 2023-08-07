@@ -10,7 +10,7 @@ class App {
         if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address, { from: this.account });
         this.addappObj1 = this.contract.events.AddSoftware({ filter: {}, fromBlock: maxBlockNumber + 1}, 
             async function (_error, data) {
-                if (!data || !data.returnValues) {utils.log("addAppEvent error");return;}
+                if (!data || !data.returnValues) {utils.log("addAppEvent error");throw _error;}
                 const {software_type,software_id}=data.returnValues
                 let infos,versions
                 if(software_type==='0'){
@@ -46,7 +46,7 @@ class App {
         this.addappObj1 = this.contract.events.AddSoftwareVersion({ filter: {}, fromBlock: maxBlockNumber + 1}, 
             async function (_error, data) {
             
-                if (!data || !data.returnValues) {utils.log("addVersionEvent error");return;}
+                if (!data || !data.returnValues) {utils.log("addVersionEvent error");throw _error;}
                 const {software_type,software_id,software_version_id}=data.returnValues
                 let infos,versions
                 if(software_type==='0'){

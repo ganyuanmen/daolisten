@@ -10,8 +10,9 @@ class DaoRegistrar
         if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address, { from: this.account });
         this.installobj=this.contract.events.CreateDao({filter: {},fromBlock: maxBlockNumber+1}, 
             async function (_error, data) {
-                if(!data || !data.returnValues) {utils.log("daoCreateEvent error:"+_error);return;}
+                if(!data || !data.returnValues) {utils.log("daoCreateEvent error:"+_error);throw _error;}
                 const dao_id=data['returnValues']['dao_id']
+                //console.log(dao_id+"-------------------------------------")
                 const _info=await  _this.infos.getDaoInfo(dao_id)
                 
                 const _accounts_votes= await _this.infos.getAccount_Votes(dao_id)

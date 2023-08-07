@@ -6,6 +6,7 @@ const configObj = require('./config/mysql_config.json');
 const {host,user,password,port,network,database,debugger_level} = configObj;
 console.log([host,user,password,port,network,database,debugger_level])
 
+const start_block=4009975
 var monitor = 0; //每10分钟重启一次
 var web3; 
 var selectAcouunt = '0x43Bf444eDBcA3d95656f0c11b4174b95A82B98AE'; //启动者钱包地址
@@ -18,6 +19,8 @@ async function daoListenStart() {
     monitor = 0;
     if (daoapi && daoapi.unsub) {daoapi.unsub()}
     if (web3 && web3.currentProvider && web3.currentProvider.close) {await web3.currentProvider.close();}
+    delete daoapi
+    delete web3
     web3 = await new Web3(`wss://${network}.infura.io/ws/v3/9676a35d629d488fb90d7eac1348c838`);
     daoapi = new Daoapi(web3, selectAcouunt,network);
     daoListen();
@@ -29,7 +32,7 @@ async function daoListenStart() {
 //处理监听
 function hand() {
   //创建mysql连接池
-    pool =  mysql.createPool({host,user,password,database,port});
+     pool = mysql.createPool({connectionLimit:1,host,user,password,database,port});
     //从数据库获取需要监听的最大区块号
     let sql = 'SELECT IFNULL(MAX(block_num),0) s FROM t_dao'  //0 
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0) FROM t_setlogo'  //1
@@ -43,24 +46,27 @@ function hand() {
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0) FROM t_proexcu'  //9
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0) FROM t_app'  //10
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0) FROM t_appversion'  //11
-        + ' UNION ALL SELECT IFNULL(MAX(block_num),0) FROM t_appinstall';  //12
+        + ' UNION ALL SELECT IFNULL(MAX(block_num),0) FROM t_appinstall'  //12
+        + ' UNION ALL SELECT IFNULL(MAX(block_num),0) FROM t_daoversion'  //13
+        + ' UNION ALL SELECT IFNULL(MAX(block_num),0) FROM t_setaccount' ; //14
 
     pool.getConnection(function(err, conn){
         if(err) throw err;
-        conn.query(sql, function (error, results, fields) {
-        if(debugger_level==='0') console.log(results);
-        if (error) console.error(error);
-        maxData = [];
-        //缓存最大区块号
-        results.forEach(element => {maxData.push(element.s)});
-        p("start...........")
-        daoListenStart();  //监听
-        
-        //1分钟循环执行
-        schedule.scheduleJob("5 * * * * *",async() => {
-                    if (monitor > 10) daoListenStart();
-                    monitor++;  
-            });
+        conn.query(sql, function (error, results) {
+            if(debugger_level==='0') console.log(results);
+            if (error) throw error;
+            maxData = [];
+            //缓存最大区块号
+            results.forEach(element => {maxData.push(element.s>start_block?element.s:start_block)});
+            console.log(maxData)
+            p("start...........")
+            daoListenStart();  //监听
+            
+            //1分钟循环执行
+            schedule.scheduleJob("5 * * * * *",async() => {
+                        if (monitor > 10) daoListenStart();
+                        monitor++;  
+                });
         });
         conn.release();
     }); 
@@ -69,45 +75,41 @@ function hand() {
 
 //监听
 function daoListen() {
-  //createDao 创建dao事件处理
-  daoapi.DaoRegistrar.daoCreateEvent(maxData[0], (obj) => {
-    if(debugger_level==='0') console.log(obj)
-    const {data}=obj
-    let sql ="call i_dao(?,?,?,?,?,?,?,?,?,?)";
-    try {
-        let params = [data['daoId'],obj.blockNumber,data['name'],data['symbol'],data['describe'],data['manager']
-        ,data['time'],data['address'],data['creator'],data['delegator']];
-        maxData[0] = obj.blockNumber;  //缓存最后区块号
-        executeSql(sql, params); //dao 信息
-        for(let i=0;i<data['accounts_votes'].length;i++)
-        {
-            sql="call i_daodetail(?,?,?,?)"
-            params=[data['daoId'],data['accounts_votes'][i]['account'],data['accounts_votes'][i]['vote'],i]
-            executeSql(sql, params); //成员及票权信息
-        }
-    } catch (e) {console.error(e);}
-  });
 
-  // publishtoken dao发布token事件
-  daoapi.DaoToken.publishTokenEvent(maxData[3], obj => {
-    const {data}=obj
-    if(debugger_level==='0') console.log(obj);
-    let sql = "call i_token(?,?,?,?)";
-    try {
-        let params = [data['daoId'],data['tokenId'],obj.blockNumber, data['timestamp']];
-        maxData[3] = obj.blockNumber ; //缓存最后区块号
-        executeSql(sql, params);
-    } catch (e) {console.error(e);}
-  })
-
-     //以下的监听需要dao条件下才能处理，所以延迟监听
-     setTimeout(() => listen_attach(), 5000);
-        
-     //延迟监听兑换，需要处理前期事件
-     setTimeout(() => listen_swap(),8000);
-
+  daoCreate() //创建dao事件处理
+  publishTolen()  // dao发布token事件
+  //以下的监听需要dao条件下才能处理，所以延迟监听
+  setTimeout(() => listen_attach(), 5000);    
+  //延迟监听兑换，需要处理前期事件
+  setTimeout(() => listen_swap(),8000);
+  updateVersion()  //升级
+  // transfer()  // 转帐
 }
 
+function listen_swap()
+{
+  utoken2token()  //u2t token 兑换 token 事件
+  token2utoken()  //t2u token 兑换 utoken 事件
+  //token2token() //t2t token 兑换 token 
+  eth2token() //eth to token eth 兑换 token
+  eth2utoken() //eth to utoken eth 兑换 utoken
+  gastoken2utoken() //GasToken to utoken 
+}
+
+function listen_attach()
+{
+  setLogo()   //setlogo 创建dao logo 事件
+  changeLogo() //chanelogo 修改 dao logo 事件
+  appInstall()  //app install 事件处理
+  execEvent()   //execEvent 执行提案事件
+  setAccount()  //添加/删除成员
+  appAdd()  //appadd 登记app 地址事件
+  //appUpdateVersion() // 登记app 版本事件
+}
+
+
+// 开始监听
+hand();
 
 //统计个人当前的token 值
 function token_cost(id, address) {
@@ -137,172 +139,269 @@ function p(str) {
   console.log(myDate.getFullYear() + '-' + (myDate.getMonth() + 1) + '-' + myDate.getDate() + ' ' + myDate.getHours() + ":" + myDate.getMinutes() + ":" + myDate.getSeconds() + "-->" + str)
 }
 
-function listen_swap()
+ 
+//----------------------------------------------------------------------------
+
+function updateVersion()
 {
-      //u2t token 兑换 token 事件
-    daoapi.IADD.utokenTotokenEvent(maxData[4], async obj => {
-        if(debugger_level==='0') console.log(obj);
+   daoapi.ProxyAdmin.updateVersion(maxData[13], (obj) => {
         const {data}=obj
-        let sql = "call i_u2t(?,?,?,?,?,?,?,?,?)";
-        try{
-          let cost = await daoapi.IADD.getPool(data.tokenId); // 流动池中 dao 的当前币值（utoken）
-          let params = [obj.blockNumber, data['tokenId'], cost.utoken, data['from'], data['to'], data['utoken'], data['token'], data['swap_time'],obj.transactionHash];
-          maxData[4] = obj.blockNumber; //缓存最后区块号
-          executeSql(sql, params);
-          token_cost(data.tokenId, data.to); //统计个人当前的token 值
-        }catch(e){console.error(e)}
-    })
-
-    //t2u token 兑换 utoken 事件
-    daoapi.IADD.tokenToUtokenEvent(maxData[5], async obj => {
         if(debugger_level==='0') console.log(obj);
-        const {data}=obj
-        let sql = "call i_t2u(?,?,?,?,?,?,?,?,?)";
-        try{
-         let cost = await daoapi.IADD.getPool(data.tokenId);// 流动池中 dao 的当前币值（utoken）
-          let params = [obj.blockNumber, data['tokenId'], cost.utoken, data['from'], data['to'], data['utoken'], data['token'], data['swap_time'],obj.transactionHash];
-          maxData[5] = obj.blockNumber; //缓存最后区块号
-          executeSql(sql, params);
-          token_cost(data.tokenId, data.from);  //统计个人当前的token 值
-        }catch(e){console.error(e)}
-    })
-
-    // //t2t token 兑换 token 
-    // daoapi.IADD.tokenTotokenEvent(maxData[6], async obj => {
-    //     console.log(obj);
-    //     const {data}=obj
-    //     let sql = "call i_t2t(?,?,?,?,?,?,?,?,?,?,?)";
-    //    try{
-    //     //  let cost1 = await daoapi.IADD.getPool(data.data.fromTokenId); // 流动池中 dao 的当前币值（utoken）
-    //     //  let cost2 = await daoapi.IADD.getPool(data.data.toTokenId);// 流动池中 dao 的当前币值（utoken）
-    //       let params = [obj.blockNumber, data.fromTokenId, data.toTokenId, 0, 0, data.from, data.to, data.fromToken, data.toToken, data.swap_time,obj.transactionHash];
-    //       maxData[6] = obj.blockNumber; //缓存最后区块号
-    //       executeSql(sql, params);
-    //       token_cost(data.toTokenId, data.to); //统计个人当前的token 值
-    //       token_cost(data.fromTokenId, data.from); //统计个人当前的token 值
-    //    }catch(e){console.log(e)}
-
-    // })
-    
-      //eth to utoken eth 兑换 utoken
-      daoapi.IADD.ETHToDaoToken(maxData[6], obj => {
-        if(debugger_level==='0') console.log(obj);
-        const {data}=obj
-        let sql = "INSERT INTO t_e2t (block_num,from_address,to_address,in_amount,out_amount,swap_time,tran_hash) VALUES(?,?,?,?,?,?,?)";
-        try{
-            let params = [obj.blockNumber, data['from'],  data['to'], data['input_amount'],data['output_amount'],data['swap_time'],obj.transactionHash];
-            maxData[6] = obj.blockNumber; //缓存最后区块号
+        let sql = "INSERT INTO t_daoversion(block_num,version_num,version_time) VALUES(?,?,?)";
+        try {
+            let params = [obj.blockNumber,data['version'],data['time']];
+            maxData[13] = obj.blockNumber ; //缓存最后区块号
             executeSql(sql, params);
-        }catch(e){console.error(e)}
-    })
-
-        //eth to utoken eth 兑换 utoken
-    daoapi.UnitToken.swapEvent(maxData[7], obj => {
-        if(debugger_level==='0') console.log(obj);
-        const {data}=obj
-        let sql = "call i_swap(?,?,?,?,?,?)";
-        try{
-            let params = [obj.blockNumber, data['address'], data['swapTime'], data['ethAmount'], data['utokenAmount'],obj.transactionHash];
-            maxData[7] = obj.blockNumber; //缓存最后区块号
-            executeSql(sql, params);
-        }catch(e){console.error(e)}
-    })
-
-        //GasToken to utoken 
-    daoapi.UnitToken.swapByGasToken(maxData[8], obj => {
-        if(debugger_level==='0') console.log(obj);
-        const {data}=obj
-        let sql = "call i_swapdeth(?,?,?,?,?,?,?)";
-        try{
-            let params = [obj.blockNumber, data['fromAddress'], data['swapTime'], data['ethAmount'], data['utokenAmount'], data['toAddress'],obj.transactionHash];
-            maxData[8] = obj.blockNumber; //缓存最后区块号
-            executeSql(sql, params);
-        }catch(e){console.error(e)}
-    })      
+        } catch (e) {console.error(e);}
+   });
 }
 
- function listen_attach()
- {
-       //setlogo 创建dao logo 事件
-    daoapi.DaoLogo.setLogoEvent(maxData[1], obj => {
-        const {data}=obj
-        if(debugger_level==='0') console.log(obj)
-        let sql = "call i_setlogo(?,?,?,?)";
-        try {
-          let params = [data['daoId'], obj.blockNumber, data['timestamp'], data['src']];
-          maxData[1] = obj.blockNumber; //缓存最后区块号
-          executeSql(sql, params);
+function daoCreate()
+{
+   daoapi.DaoRegistrar.daoCreateEvent(maxData[0], (obj) => {
+       if(debugger_level==='0') console.log(obj)
+       const {data}=obj
+       let sql ="call i_dao(?,?,?,?,?,?,?,?,?,?)";
+       try {
+           let params = [data['daoId'],obj.blockNumber,data['name'],data['symbol'],data['describe'],data['manager']
+           ,data['time'],data['address'],data['creator'],data['delegator']];
+           maxData[0] = obj.blockNumber;  //缓存最后区块号
+           executeSql(sql, params); //dao 信息
+           for(let i=0;i<data['accounts_votes'].length;i++)
+           {
+               sql="call i_daodetail(?,?,?,?)"
+               params=[data['daoId'],data['accounts_votes'][i]['account'],data['accounts_votes'][i]['vote'],data['accounts_votes'][i]['memberIndex']]
+               executeSql(sql, params); //成员及票权信息
+           }
        } catch (e) {console.error(e);}
-    })
+   });
+}
 
-    //chanelogo 修改 dao logo 事件
-    daoapi.DaoLogo.changeLogoEvent(maxData[2], obj => {
-        if(debugger_level==='0') console.log(obj)
-      const {data}=obj
-        let sql = "call i_changelogo(?,?,?,?)";
-        try {
-          let params = [data['daoId'], obj.blockNumber, data['timestamp'], data['src']];
-          maxData[2] = obj.blockNumber ;//缓存最后区块号
-          executeSql(sql, params);
-      } catch (e) {console.error(e);}
-    })
+function publishTolen()
+{
+   daoapi.DaoToken.publishTokenEvent(maxData[3], obj => {
+       const {data}=obj
+       if(debugger_level==='0') console.log(obj);
+       let sql = "call i_token(?,?,?,?)";
+       try {
+           let params = [data['daoId'],data['tokenId'],obj.blockNumber, data['timestamp']];
+           maxData[3] = obj.blockNumber ; //缓存最后区块号
+           executeSql(sql, params);
+       } catch (e) {console.error(e);}
+   })
+}
 
-    //app install 事件处理
-    daoapi.DaoPluginManage.installEvent(maxData[12], (obj) => {
-        if(debugger_level==='0') console.log(obj)
-      const {data}=obj
-      let sql ="INSERT INTO t_appinstall(block_num,dao_id,delegate_id,app_type,app_id,app_version,install_address,install_time) VALUES(?,?,?,?,?,?,?,?)";
-      try {
-          let params = [obj.blockNumber,data['dao_id'],data['delegate_id'],1,data['app_id'],data['app_version'],data['install_address'],data['install_time']];
-          maxData[12] = obj.blockNumber;  //缓存最后区块号
-          executeSql(sql, params); //dao 信息
-      } catch (e) {console.error(e);}
-    });
-
-      //execEvent 执行提案事件
-    daoapi.EventSum.execEvent(maxData[9],obj => {
-        if(debugger_level==='0') console.log(obj);
-        const {data}=obj
-        let sql = "CALL excu_pro(?,?,?,?)";
-        try{
-          
-          let params = [obj.blockNumber, data['proHash'],data['address'], data['time']];
-          maxData[9] = obj.blockNumber; //缓存最后区块号
-          executeSql(sql, params);
+function utoken2token()
+{
+   daoapi.IADD.utokenTotokenEvent(maxData[4], async obj => {
+       if(debugger_level==='0') console.log(obj);
+       const {data}=obj
+       let sql = "call i_u2t(?,?,?,?,?,?,?,?,?)";
+       try{
+         let cost = await daoapi.IADD.getPool(data.tokenId); // 流动池中 dao 的当前币值（utoken）
+         let params = [obj.blockNumber, data['tokenId'], cost.utoken, data['from'], data['to'], data['utoken'], data['token'], data['swap_time'],obj.transactionHash];
+         maxData[4] = obj.blockNumber; //缓存最后区块号
+         executeSql(sql, params);
+         token_cost(data.tokenId, data.to); //统计个人当前的token 值
        }catch(e){console.error(e)}
-    })
+   })
+}
 
-  //appadd 登记app 地址事件
-    daoapi.App.addAppEvent(maxData[10], async (obj) => {
-        if(debugger_level==='0') console.log(obj);
-      const {data}=obj
-      let sql ="call i_app(?,?,?,?,?,?,?,?,?,?)";
-      try {
-          let params = [obj.blockNumber,data['name'],data['app_id'],data['version'],data['desc'],data['appAddress']
-          ,data['manager'],data['time'],data['ver_desc'],data['software_type']];
-          maxData[10] = obj.blockNumber; //缓存最后区块号
-          executeSql(sql, params);
+function token2utoken()
+{
+   daoapi.IADD.tokenToUtokenEvent(maxData[5], async obj => {
+       if(debugger_level==='0') console.log(obj);
+       const {data}=obj
+       let sql = "call i_t2u(?,?,?,?,?,?,?,?,?)";
+       try{
+        let cost = await daoapi.IADD.getPool(data.tokenId);// 流动池中 dao 的当前币值（utoken）
+         let params = [obj.blockNumber, data['tokenId'], cost.utoken, data['from'], data['to'], data['utoken'], data['token'], data['swap_time'],obj.transactionHash];
+         maxData[5] = obj.blockNumber; //缓存最后区块号
+         executeSql(sql, params);
+         token_cost(data.tokenId, data.from);  //统计个人当前的token 值
+       }catch(e){console.error(e)}
+   })
+}
+
+function token2token()
+{
+   daoapi.IADD.tokenTotokenEvent(maxData[6], async obj => {
+       console.log(obj);
+       const {data}=obj
+       let sql = "call i_t2t(?,?,?,?,?,?,?,?,?,?,?)";
+      try{
+       //  let cost1 = await daoapi.IADD.getPool(data.data.fromTokenId); // 流动池中 dao 的当前币值（utoken）
+       //  let cost2 = await daoapi.IADD.getPool(data.data.toTokenId);// 流动池中 dao 的当前币值（utoken）
+         let params = [obj.blockNumber, data.fromTokenId, data.toTokenId, 0, 0, data.from, data.to, data.fromToken, data.toToken, data.swap_time,obj.transactionHash];
+         maxData[6] = obj.blockNumber; //缓存最后区块号
+         executeSql(sql, params);
+         token_cost(data.toTokenId, data.to); //统计个人当前的token 值
+         token_cost(data.fromTokenId, data.from); //统计个人当前的token 值
+      }catch(e){console.log(e)}
+
+   })
+}
+
+function eth2token()
+{
+   daoapi.IADD.ETHToDaoToken(maxData[6], obj => {
+       if(debugger_level==='0') console.log(obj);
+       const {data}=obj
+       let sql = "INSERT INTO t_e2t (block_num,from_address,to_address,in_amount,out_amount,swap_time,tran_hash) VALUES(?,?,?,?,?,?,?)";
+       try{
+           let params = [obj.blockNumber, data['from'],  data['to'], data['input_amount'],data['output_amount'],data['swap_time'],obj.transactionHash];
+           maxData[6] = obj.blockNumber; //缓存最后区块号
+           executeSql(sql, params);
+       }catch(e){console.error(e)}
+   })
+}
+
+function eth2utoken()
+{
+   daoapi.UnitToken.swapEvent(maxData[7], obj => {
+       if(debugger_level==='0') console.log(obj);
+       const {data}=obj
+       let sql = "call i_swap(?,?,?,?,?,?)";
+       try{
+           let params = [obj.blockNumber, data['address'], data['swapTime'], data['ethAmount'], data['utokenAmount'],obj.transactionHash];
+           maxData[7] = obj.blockNumber; //缓存最后区块号
+           executeSql(sql, params);
+       }catch(e){console.error(e)}
+   })
+}
+
+function gastoken2utoken()
+{
+   daoapi.UnitToken.swapByGasToken(maxData[8], obj => {
+       if(debugger_level==='0') console.log(obj);
+       const {data}=obj
+       let sql = "call i_swapdeth(?,?,?,?,?,?,?)";
+       try{
+           let params = [obj.blockNumber, data['fromAddress'], data['swapTime'], data['ethAmount'], data['utokenAmount'], data['toAddress'],obj.transactionHash];
+           maxData[8] = obj.blockNumber; //缓存最后区块号
+           executeSql(sql, params);
+       }catch(e){console.error(e)}
+   })      
+}
+
+function setLogo()
+{
+   daoapi.DaoLogo.setLogoEvent(maxData[1], obj => {
+       const {data}=obj
+       if(debugger_level==='0') console.log(obj)
+       let sql = "call i_setlogo(?,?,?,?)";
+       try {
+         let params = [data['daoId'], obj.blockNumber, data['timestamp'], data['src']];
+         maxData[1] = obj.blockNumber; //缓存最后区块号
+         executeSql(sql, params);
       } catch (e) {console.error(e);}
-    });
+   })
+}
 
-      
-  //   // 登记app 版本事件
-  // daoapi.App.addVersionEvent(maxData[11], async (obj) => {
-  //   console.log(obj);
-  //   const {data}=obj
-  //   let sql ="call i_app(?,?,?,?,?,?,?,?,?,?)";
-  //   try {
-  //       let params = [obj.blockNumber,data['name'],data['index'],data['version'],data['desc'],data['appAddress']
-  //       ,data['manager'],data['time'],data['ver_desc'],data['software_type']];
-  //       maxData[10] = obj.blockNumber; //缓存最后区块号
-  //       executeSql(sql, params);
-  //   } catch (e) {console.error(e);}
-  // });
+function changeLogo()
+{
+   daoapi.DaoLogo.changeLogoEvent(maxData[2], obj => {
+       if(debugger_level==='0') console.log(obj)
+     const {data}=obj
+       let sql = "call i_changelogo(?,?,?,?)";
+       try {
+         let params = [data['daoId'], obj.blockNumber, data['timestamp'], data['src']];
+         maxData[2] = obj.blockNumber ;//缓存最后区块号
+         executeSql(sql, params);
+     } catch (e) {console.error(e);}
+   })
+}
 
- }
+function appInstall()
+{
+   daoapi.DaoPluginManage.installEvent(maxData[12], (obj) => {
+       if(debugger_level==='0') console.log(obj)
+     const {data}=obj
+     let sql ="INSERT INTO t_appinstall(block_num,dao_id,delegate_id,app_type,app_id,app_version,install_address,install_time) VALUES(?,?,?,?,?,?,?,?)";
+     try {
+         let params = [obj.blockNumber,data['dao_id'],data['delegate_id'],1,data['app_id'],data['app_version'],data['install_address'],data['install_time']];
+         maxData[12] = obj.blockNumber;  //缓存最后区块号
+         executeSql(sql, params); //dao 信息
+     } catch (e) {console.error(e);}
+   });
+}
+
+function execEvent()
+{
+   daoapi.EventSum.execEvent(maxData[9],obj => {
+       if(debugger_level==='0') console.log(obj);
+       const {data}=obj
+       let sql = "CALL excu_pro(?,?,?,?)";
+       try{
+         
+         let params = [obj.blockNumber, data['proHash'],data['address'], data['time']];
+         maxData[9] = obj.blockNumber; //缓存最后区块号
+         executeSql(sql, params);
+      }catch(e){console.error(e)}
+   })
+}
 
 
- 
-// 开始监听
-hand();
+function setAccount()
+{
+   daoapi.EventSum.setAccount(maxData[14],obj => {
+       if(debugger_level==='0') console.log(obj);
+       const {data}=obj
+       let sql = "INSERT INTO t_setaccount(block_num,set_time,set_address,set_vote,set_index,set_delegate) VALUES(?,?,?,?,?,?)";
+       try{
+         let params = [obj.blockNumber, data['time'],data['account'],data['vote'],data['index'],data['delegator']];
+         maxData[14] = obj.blockNumber; //缓存最后区块号
+         executeSql(sql, params);
+      }catch(e){console.error(e)}
+   })
+}
+
+function appAdd()
+{
+   daoapi.App.addAppEvent(maxData[10], async (obj) => {
+       if(debugger_level==='0') console.log(obj);
+     const {data}=obj
+     let sql ="call i_app(?,?,?,?,?,?,?,?,?,?)";
+     try {
+         let params = [obj.blockNumber,data['name'],data['app_id'],data['version'],data['desc'],data['appAddress']
+         ,data['manager'],data['time'],data['ver_desc'],data['software_type']];
+         maxData[10] = obj.blockNumber; //缓存最后区块号
+         executeSql(sql, params);
+     } catch (e) {console.error(e);}
+   });
+}
+
+function appUpdateVersion()
+{
+   daoapi.App.addVersionEvent(maxData[11], async (obj) => {
+       console.log(obj);
+       const {data}=obj
+       let sql ="call i_app(?,?,?,?,?,?,?,?,?,?)";
+       try {
+           let params = [obj.blockNumber,data['name'],data['index'],data['version'],data['desc'],data['appAddress']
+           ,data['manager'],data['time'],data['ver_desc'],data['software_type']];
+           maxData[10] = obj.blockNumber; //缓存最后区块号
+           executeSql(sql, params);
+       } catch (e) {console.error(e);}
+   });
+}
+
+
+
+function transfer()
+{
+   daoapi.UnitToken.transfer(0, async (obj) => {
+      //  console.log(obj);
+      //  const {data}=obj
+      //  let sql ="call i_app(?,?,?,?,?,?,?,?,?,?)";
+      //  try {
+      //      let params = [obj.blockNumber,data['name'],data['index'],data['version'],data['desc'],data['appAddress']
+      //      ,data['manager'],data['time'],data['ver_desc'],data['software_type']];
+      //      maxData[10] = obj.blockNumber; //缓存最后区块号
+      //      executeSql(sql, params);
+      //  } catch (e) {console.error(e);}
+   });
+}
+
+
 

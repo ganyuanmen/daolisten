@@ -833,6 +833,10 @@ const DaoSystemSoftware_abi={abi:[
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
+  },
+  {
+    "stateMutability": "payable",
+    "type": "receive"
   }
 ]};
  module.exports=DaoSystemSoftware_abi;

@@ -1,10 +1,5 @@
 const UnitToken_abi={abi:[
   {
-    "inputs": [],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
     "anonymous": false,
     "inputs": [
       {
@@ -27,6 +22,19 @@ const UnitToken_abi={abi:[
       }
     ],
     "name": "Approval",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "ControlEthUsdc",
     "type": "event"
   },
   {
@@ -380,9 +388,9 @@ const UnitToken_abi={abi:[
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "eth_usdc",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "index",
+        "type": "uint256"
       }
     ],
     "name": "controlEthUsdc",
@@ -456,6 +464,25 @@ const UnitToken_abi={abi:[
   {
     "inputs": [],
     "name": "ethUsdc",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "eth_usdcs",
     "outputs": [
       {
         "internalType": "address",
@@ -597,6 +624,57 @@ const UnitToken_abi={abi:[
         "type": "bool"
       }
     ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "_eth_usdcs",
+        "type": "address[]"
+      }
+    ],
+    "name": "init_eth_usdcs",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "name_",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "symbol_",
+        "type": "string"
+      }
+    ],
+    "name": "init_proxy",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "origin",
+        "type": "address"
+      }
+    ],
+    "name": "init_proxy",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "init_proxy2",
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },

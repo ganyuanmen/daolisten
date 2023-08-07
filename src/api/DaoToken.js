@@ -11,7 +11,7 @@ class DaoToken
         if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address, { from: this.account });
         this.tObj=this.contract.events.Issue({filter: {},fromBlock: maxBlockNumber+1},
             async function (_error, data) {   
-                if(!data || !data.returnValues) {utils.log("publishTokenEvent error");return;}        
+                if(!data || !data.returnValues) {utils.log("publishTokenEvent error");throw _error;}        
                 callbackFun.call(null, utils.valueFactory(data,
                     { 
                         "tokenId": data.returnValues['eip3712_id'], 

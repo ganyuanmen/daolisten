@@ -23,10 +23,9 @@ class GetInfos {
         let _acar=[]
         for(let i=0;i<result.length;i++)
         {
-            if(parseInt(result[i]['vote'])>0) {
-            _acar.push({account:result[i]["account"],vote:result[i]["vote"]})
-            } else break;
-            
+            if(result[i]['account']!='0x0000000000000000000000000000000000000000') {
+            _acar.push({account:result[i]["account"],vote:result[i]["vote"],memberIndex:i+1})
+            } 
         }
         return _acar
     }

@@ -57,7 +57,7 @@ const JSZip= require('jszip')
         if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address, { from: this.account });
         this.eventObj1=this.contract.events.InitLogo({filter: {},fromBlock: maxBlockNumber+1},
             async function (_error, data) {  
-                if(!data || !data.returnValues) {utils.log("setLogoEvent error"); return;}
+                if(!data || !data.returnValues) {utils.log("setLogoEvent error"); throw _error;}
                 let img=await _this.getLogo(data.returnValues['dao_id'])
                 callbackFun.call(null, utils.valueFactory(data,
                      {
@@ -77,7 +77,7 @@ const JSZip= require('jszip')
         if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address, { from: this.account });
         this.eventObj2=this.contract.events.ChangeLogo({filter: {},fromBlock: maxBlockNumber+1}, 
             async function (_error, data) { 
-                if(!data || !data.returnValues) {utils.log("changeLogoEvent error");return;}
+                if(!data || !data.returnValues) {utils.log("changeLogoEvent error");throw _error;}
                 let img=await _this.getLogo(data.returnValues['dao_id'])
                 callbackFun.call(null,utils.valueFactory(data, 
                     {

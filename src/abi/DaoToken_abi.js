@@ -1,21 +1,5 @@
 const DaoToken_abi={abi:[
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_iadd_init",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "dao_registrar",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
     "anonymous": false,
     "inputs": [
       {
@@ -417,6 +401,24 @@ const DaoToken_abi={abi:[
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_iadd_init",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "dao_registrar",
+        "type": "address"
+      }
+    ],
+    "name": "init_proxy",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

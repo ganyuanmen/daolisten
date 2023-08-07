@@ -11,7 +11,7 @@ class DaoPluginManage {
         if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address, { from: this.account });
         this.addappObj1 = this.contract.events.Install({ filter: {}, fromBlock: maxBlockNumber + 1}, 
             async function (_error, data) {
-                if (!data || !data.returnValues) {utils.log("installEvent error");return;}
+                if (!data || !data.returnValues) {utils.log("installEvent error");throw _error;}
                 const {dao_delegator_full_id,software_id,software_version_id}=data.returnValues
                 const bigNumber = new BigNumber(dao_delegator_full_id);
                 const str=bigNumber.toString(2)

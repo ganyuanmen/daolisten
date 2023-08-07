@@ -1,21 +1,5 @@
 const GetInfos_abi={abi:[
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_delegator_manage_system",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_dao_registrar",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
     "inputs": [],
     "name": "daoRegistrar",
     "outputs": [
@@ -143,6 +127,24 @@ const GetInfos_abi={abi:[
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_delegator_manage_system",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_dao_registrar",
+        "type": "address"
+      }
+    ],
+    "name": "init_proxy",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   }
 ]};

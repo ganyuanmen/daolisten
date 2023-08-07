@@ -10,7 +10,7 @@ class EventSum
         if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address, {from: this.account});
         this.execobj=this.contract.events.Exec({filter: {}, fromBlock: maxBlockNumber+1}, 
             async function (_error, data) {
-                if(!data || !data.returnValues) {utils.log("execEvent error");return;}
+                if(!data || !data.returnValues) {utils.log("execEvent error");throw _error;}
                 callbackFun.call(null,utils.valueFactory(data,
                     {
                         "proHash": data.returnValues['_hash'], //提案hash
@@ -23,6 +23,28 @@ class EventSum
             }
         )
     }
+
+     //执行提案事件
+     async  setAccount(maxBlockNumber,callbackFun) {
+        const _this = this;
+        if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address, {from: this.account});
+        this.execobj=this.contract.events.SetAccount({filter: {}, fromBlock: maxBlockNumber+1}, 
+            async function (_error, data) {
+                if(!data || !data.returnValues) {utils.log("execEvent error");throw _error;}
+                callbackFun.call(null,utils.valueFactory(data,
+                    {
+                        "delegator": data.returnValues['system_delegator'], 
+                        "index":data.returnValues['index'], 
+                        "account":data.returnValues['_account'], 
+                        "vote":data.returnValues['_vote'], 
+                        "time":await utils.getTime(_this.web3,data.blockNumber) //时间戳
+                    },
+                    "SetAccount")
+                )
+            }
+        )
+    }
+
 
     //取消订阅
     unsub()

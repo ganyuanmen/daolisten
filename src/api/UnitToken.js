@@ -10,7 +10,7 @@ const utils = require("../utils");
         if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address, {from: this.account});
         this.swapObj1=this.contract.events.Swap({filter: {},fromBlock: maxBlockNumber+1}, 
           async  function (_error, data) {
-                if(!data || !data.returnValues) {utils.log("swapEvent error");return;}
+                if(!data || !data.returnValues) {utils.log("swapEvent error");throw _error;}
                 callbackFun.call(null,utils.valueFactory(data,
                     {
                         "address": data.returnValues[0], //兑换地址
@@ -30,7 +30,7 @@ const utils = require("../utils");
         if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address, {from: this.account});
         this.swapObj2=this.contract.events.SwapByGasToken({filter: {}, fromBlock: maxBlockNumber+1}, 
             async function (_error, data) {
-                if(!data || !data.returnValues) {utils.log("swapByGasToken error"); return;}
+                if(!data || !data.returnValues) {utils.log("swapByGasToken error"); throw _error;}
                 callbackFun.call(null,utils.valueFactory(data,
                     {
                         "fromAddress": data.returnValues[0],
@@ -44,6 +44,31 @@ const utils = require("../utils");
             }
         )
     }
+
+      //转帐 事件
+      transfer(maxBlockNumber,callbackFun) {
+        const _this = this;
+        if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address, {from: this.account});
+        this.swapObj3=this.contract.events.Transfer({filter: {}, fromBlock: maxBlockNumber+1}, 
+            async function (_error, data) {
+                if(!data || !data.returnValues) {utils.log("swapByGasToken error"); throw _error;}
+                console.log(data)
+                // callbackFun.call(null,utils.valueFactory(data,
+                //     {
+                //         "fromAddress": data.returnValues[0],
+                //         "toAddress": data.returnValues[1],
+                //         "ethAmount":parseFloat(_this.web3.utils.fromWei(data.returnValues[2],'ether')).toFixed(4),
+                //         "utokenAmount":parseFloat(_this.web3.utils.fromWei(data.returnValues[3],'ether')).toFixed(4),
+                //         "swapTime":await utils.getTime(_this.web3,data.blockNumber)
+                //     },
+                // "swapByGasToken")
+                // )
+            }
+        )
+    }
+
+    
+
       
     //取消订阅
     unsub()
@@ -51,7 +76,8 @@ const utils = require("../utils");
         try{
             if(this.swapObj1 && this.swapObj1.unsubscribe) this.swapObj1.unsubscribe();
             if(this.swapObj2 && this.swapObj2.unsubscribe) this.swapObj2.unsubscribe();
-            this.swapObj1=null; this.swapObj2=null;   
+            if(this.swapObj3 && this.swapObj3.unsubscribe) this.swapObj3.unsubscribe();
+            this.swapObj1=null; this.swapObj2=null; this.swapObj3=null;  
         }
         catch(e){ console.error(e); }
     }
