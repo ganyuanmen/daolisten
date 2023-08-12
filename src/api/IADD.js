@@ -67,6 +67,7 @@ class IADD
                     {
                         "from": data.returnValues.spender,
                         "to": data.returnValues.to,
+                        "tokenId":data.returnValues.id,
                         "swap_time":await utils.getTime(_this.web3,data.blockNumber),
                         "input_amount":parseFloat(_this.web3.utils.fromWei(data.returnValues.input_amount,'ether')).toFixed(4),
                         "output_amount":parseFloat(_this.web3.utils.fromWei(data.returnValues.output_amount,'ether')).toFixed(4)
@@ -95,7 +96,7 @@ class IADD
         let result= await this.contract.methods.pools(_id).call({from: this.account});
         let utoken= this.web3.utils.fromWei(result.unit_token_supply,'ether')
         let token= this.web3.utils.fromWei(result.eip3712_supply,'ether')
-        let u=(parseFloat(utoken)/parseFloat(token)).toFixed(4)
+        let u=(parseFloat(utoken)/parseFloat(token)-0.01).toFixed(6)
         return {utoken: u,utokenWei:result.unit_token_supply};
     
     }

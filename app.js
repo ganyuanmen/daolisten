@@ -244,12 +244,13 @@ function token2token()
 
 function eth2token()
 {
-   daoapi.IADD.ETHToDaoToken(maxData[6], obj => {
+   daoapi.IADD.ETHToDaoToken(maxData[6],async obj => {
        if(debugger_level==='0') console.log(obj);
        const {data}=obj
-       let sql = "INSERT INTO t_e2t (block_num,from_address,to_address,in_amount,out_amount,swap_time,tran_hash) VALUES(?,?,?,?,?,?,?)";
+       let sql = "INSERT INTO t_e2t (block_num,from_address,to_address,in_amount,out_amount,swap_time,tran_hash,token_id,utoken_cost) VALUES(?,?,?,?,?,?,?,?,?)";
        try{
-           let params = [obj.blockNumber, data['from'],  data['to'], data['input_amount'],data['output_amount'],data['swap_time'],obj.transactionHash];
+           let cost = await daoapi.IADD.getPool(data.tokenId); // 流动池中 dao 的当前币值（utoken）
+           let params = [obj.blockNumber, data['from'],  data['to'], data['input_amount'],data['output_amount'],data['swap_time'],obj.transactionHash,data.tokenId,cost.utoken];
            maxData[6] = obj.blockNumber; //缓存最后区块号
            executeSql(sql, params);
        }catch(e){console.error(e)}

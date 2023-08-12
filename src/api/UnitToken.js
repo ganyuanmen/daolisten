@@ -14,8 +14,8 @@ const utils = require("../utils");
                 callbackFun.call(null,utils.valueFactory(data,
                     {
                         "address": data.returnValues[0], //兑换地址
-                        "ethAmount":parseFloat(_this.web3.utils.fromWei(data.returnValues[1],'ether')).toFixed(4), 
-                        "utokenAmount":parseFloat(_this.web3.utils.fromWei(data.returnValues[2],'ether')).toFixed(4),
+                        "ethAmount":parseFloat(_this.web3.utils.fromWei(data.returnValues[1],'ether')).toFixed(6), 
+                        "utokenAmount":parseFloat(_this.web3.utils.fromWei(data.returnValues[2],'ether')).toFixed(6),
                         "swapTime": await utils.getTime(_this.web3,data.blockNumber)
                     },
                     "swapEvent")
@@ -35,8 +35,8 @@ const utils = require("../utils");
                     {
                         "fromAddress": data.returnValues[0],
                         "toAddress": data.returnValues[1],
-                        "ethAmount":parseFloat(_this.web3.utils.fromWei(data.returnValues[2],'ether')).toFixed(4),
-                        "utokenAmount":parseFloat(_this.web3.utils.fromWei(data.returnValues[3],'ether')).toFixed(4),
+                        "ethAmount":parseFloat(_this.web3.utils.fromWei(data.returnValues[2],'ether')).toFixed(6),
+                        "utokenAmount":parseFloat(_this.web3.utils.fromWei(data.returnValues[3],'ether')).toFixed(6),
                         "swapTime":await utils.getTime(_this.web3,data.blockNumber)
                     },
                 "swapByGasToken")
