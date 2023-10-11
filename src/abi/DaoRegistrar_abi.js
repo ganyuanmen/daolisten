@@ -276,6 +276,70 @@ const DaoRegistrar_abi={abi:[
         "internalType": "address",
         "name": "dao_token",
         "type": "address"
+      },
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "symbol",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "desc",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "manager",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "whetherDelayIssuance",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct DaoInfo",
+        "name": "daoInfo",
+        "type": "tuple"
+      },
+      {
+        "internalType": "uint128",
+        "name": "software_system_id",
+        "type": "uint128"
+      },
+      {
+        "internalType": "uint128",
+        "name": "software_system_version_id",
+        "type": "uint128"
+      },
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          },
+          {
+            "internalType": "uint32",
+            "name": "vote",
+            "type": "uint32"
+          }
+        ],
+        "internalType": "struct AccountInfo[]",
+        "name": "account_infos",
+        "type": "tuple[]"
+      },
+      {
+        "internalType": "address[]",
+        "name": "executionAddressCanUseInAllPlugin",
+        "type": "address[]"
       }
     ],
     "name": "init",
@@ -344,36 +408,6 @@ const DaoRegistrar_abi={abi:[
   {
     "inputs": [],
     "name": "renounceOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "components": [
-          {
-            "internalType": "address",
-            "name": "token",
-            "type": "address"
-          },
-          {
-            "internalType": "uint256",
-            "name": "amount",
-            "type": "uint256"
-          },
-          {
-            "internalType": "address",
-            "name": "to",
-            "type": "address"
-          }
-        ],
-        "internalType": "struct DaoPrice",
-        "name": "dao_price",
-        "type": "tuple"
-      }
-    ],
-    "name": "setDaoPrice",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

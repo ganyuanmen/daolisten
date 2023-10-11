@@ -1,6 +1,8 @@
 const ethers = require("ethers");
 const abi1=require('./abi/UnitToken_abi')
 
+
+
 //这里是sepolia测试网， 主网需要改为mainnet
 const NODE_URL = "wss://sepolia.infura.io/ws/v3/9676a35d629d488fb90d7eac1348c838";
 var provider = new ethers.providers.WebSocketProvider(NODE_URL);
@@ -30,6 +32,32 @@ let wallet = new ethers.Wallet(privateKey,provider);
 //var provider1 = ethers.getDefaultProvider('sepolia');
 // address = "0x5aD91dCCD7b5F15A454213B36aaDa82a8FbD4ea2"
 // signer = new ethers.VoidSigner(address, provider1)
+
+const wallet1=new ethers.wallet(privateKey)
+const provider1=new ethers.providers.JsonRpcProvider(NODE_URL)
+const signer1=wallet.connect(provider1)
+
+let code=this.contract.interface.encodeFunctionData('swap',[_to])
+let para=  {
+    // Wrapped ETH address
+    to: this.address,
+  
+    // `function deposit() payable`
+    data: code,
+  
+    // 1 ether
+    // value: parseEther("1.0")
+  }
+let gas1=await this.signer.estimateGas(para )
+console.log(`gas1: ${gas1.toString()}`)
+
+let gas2=await this.contract.getFunction('swap').estimateGas(_to,{value: ethValue});
+console.log(`gas2: ${gas2.toString()}`)
+
+let gas3=await this.signer.provider.estimateGas(para)
+console.log(`gas3: ${gas3.toString()}`)
+
+
 
 
 async function main()

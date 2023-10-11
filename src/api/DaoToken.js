@@ -26,7 +26,7 @@ class DaoToken
     async balanceOf(_id,_address) {
         if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address, { from: this.account });
         let val= await this.contract.methods.balanceOf(_id,_address).call({ from: this.account })
-        return parseFloat(this.web3.utils.fromWei(val,'ether')).toFixed(4)
+        return parseFloat(this.web3.utils.fromWei(val,'ether')).toFixed(6)
     }
 
     //取消订阅

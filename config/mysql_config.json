@@ -4,6 +4,6 @@
   "password":"123456",
   "database":"dao_db",
   "port":"3306",
-  "network":"sepolia",
+  "network":"goerli",
   "debugger_level":"0"
 }

@@ -1,26 +1,36 @@
 const uToken_abi=require('../abi/UnitToken_abi');
+const iadd_abi=require('../abi/_IADD_abi');
 const utils = require("../utils");
-
+const ethers=require('ethers')
  // utoken事件
  class UnitToken
 {
+    get eventIface()
+    {
+        if(!this.iface) this.iface = new  ethers.Interface(iadd_abi.abi)
+        return this.iface
+    }
     //eth 兑换 token事件
     swapEvent(maxBlockNumber,callbackFun) {
         const _this = this;
         if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address, {from: this.account});
         this.swapObj1=this.contract.events.Swap({filter: {},fromBlock: maxBlockNumber+1}, 
           async  function (_error, data) {
-                if(!data || !data.returnValues) {utils.log("swapEvent error");throw _error;}
+            if(!data || !data.returnValues) {utils.log("swapEvent error");throw _error;}    
+            let eventData=await utils.getCheckEvent(_this.ethersProvider,_this.eventIface,'ETHToDaoToken', data.transactionHash)    
+            if(!eventData.isOk)
                 callbackFun.call(null,utils.valueFactory(data,
                     {
                         "address": data.returnValues[0], //兑换地址
                         "ethAmount":parseFloat(_this.web3.utils.fromWei(data.returnValues[1],'ether')).toFixed(6), 
                         "utokenAmount":parseFloat(_this.web3.utils.fromWei(data.returnValues[2],'ether')).toFixed(6),
-                        "swapTime": await utils.getTime(_this.web3,data.blockNumber)
+                        "swapTime": await utils.getTime(_this.web3,data.blockNumber),
+                        "gas":eventData.gasUsed
                     },
                     "swapEvent")
                 )
             }
+        
         )
     }
 
@@ -57,8 +67,8 @@ const utils = require("../utils");
                 //     {
                 //         "fromAddress": data.returnValues[0],
                 //         "toAddress": data.returnValues[1],
-                //         "ethAmount":parseFloat(_this.web3.utils.fromWei(data.returnValues[2],'ether')).toFixed(4),
-                //         "utokenAmount":parseFloat(_this.web3.utils.fromWei(data.returnValues[3],'ether')).toFixed(4),
+                //         "ethAmount":parseFloat(_this.web3.utils.fromWei(data.returnValues[2],'ether')).toFixed(6),
+                //         "utokenAmount":parseFloat(_this.web3.utils.fromWei(data.returnValues[3],'ether')).toFixed(6),
                 //         "swapTime":await utils.getTime(_this.web3,data.blockNumber)
                 //     },
                 // "swapByGasToken")
@@ -83,12 +93,13 @@ const utils = require("../utils");
     }
 
    
-    constructor(_web3,_account,_address) {
+    constructor(_web3,_account,_address,_ethersProvider) {
         // utils.log("utoken start....");
         this.web3=_web3;
         this.account=_account;
         this.address=_address;
         this.abi=uToken_abi.abi
+        this.ethersProvider=_ethersProvider
       }
   }
   

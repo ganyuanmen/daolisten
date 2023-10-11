@@ -48,7 +48,8 @@ function hand() {
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0) FROM t_appversion'  //11
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0) FROM t_appinstall'  //12
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0) FROM t_daoversion'  //13
-        + ' UNION ALL SELECT IFNULL(MAX(block_num),0) FROM t_setaccount' ; //14
+        + ' UNION ALL SELECT IFNULL(MAX(block_num),0) FROM t_setaccount'  //14
+        + ' UNION ALL SELECT IFNULL(MAX(block_num),0) FROM t_t2t' ; //15
 
     pool.getConnection(function(err, conn){
         if(err) throw err;
@@ -79,9 +80,9 @@ function daoListen() {
   daoCreate() //创建dao事件处理
   publishTolen()  // dao发布token事件
   //以下的监听需要dao条件下才能处理，所以延迟监听
-  setTimeout(() => listen_attach(), 5000);    
+  setTimeout(() => listen_attach(), 5000);     //5
   //延迟监听兑换，需要处理前期事件
-  setTimeout(() => listen_swap(),8000);
+  setTimeout(() => listen_swap(),8000);  //8
   updateVersion()  //升级
   // transfer()  // 转帐
 }
@@ -90,7 +91,7 @@ function listen_swap()
 {
   utoken2token()  //u2t token 兑换 token 事件
   token2utoken()  //t2u token 兑换 utoken 事件
-  //token2token() //t2t token 兑换 token 
+  token2token() //t2t token 兑换 token 
   eth2token() //eth to token eth 兑换 token
   eth2utoken() //eth to utoken eth 兑换 utoken
   gastoken2utoken() //GasToken to utoken 
@@ -196,10 +197,10 @@ function utoken2token()
    daoapi.IADD.utokenTotokenEvent(maxData[4], async obj => {
        if(debugger_level==='0') console.log(obj);
        const {data}=obj
-       let sql = "call i_u2t(?,?,?,?,?,?,?,?,?)";
+       let sql = "call i_u2t(?,?,?,?,?,?,?,?,?,?)";
        try{
          let cost = await daoapi.IADD.getPool(data.tokenId); // 流动池中 dao 的当前币值（utoken）
-         let params = [obj.blockNumber, data['tokenId'], cost.utoken, data['from'], data['to'], data['utoken'], data['token'], data['swap_time'],obj.transactionHash];
+         let params = [obj.blockNumber, data['tokenId'], cost, data['from'], data['to'], data['utoken'], data['token'], data['swap_time'],obj.transactionHash,data['gas']];
          maxData[4] = obj.blockNumber; //缓存最后区块号
          executeSql(sql, params);
          token_cost(data.tokenId, data.to); //统计个人当前的token 值
@@ -212,10 +213,10 @@ function token2utoken()
    daoapi.IADD.tokenToUtokenEvent(maxData[5], async obj => {
        if(debugger_level==='0') console.log(obj);
        const {data}=obj
-       let sql = "call i_t2u(?,?,?,?,?,?,?,?,?)";
+       let sql = "call i_t2u(?,?,?,?,?,?,?,?,?,?)";
        try{
         let cost = await daoapi.IADD.getPool(data.tokenId);// 流动池中 dao 的当前币值（utoken）
-         let params = [obj.blockNumber, data['tokenId'], cost.utoken, data['from'], data['to'], data['utoken'], data['token'], data['swap_time'],obj.transactionHash];
+         let params = [obj.blockNumber, data['tokenId'], cost, data['from'], data['to'], data['utoken'], data['token'], data['swap_time'],obj.transactionHash,data['gas']];
          maxData[5] = obj.blockNumber; //缓存最后区块号
          executeSql(sql, params);
          token_cost(data.tokenId, data.from);  //统计个人当前的token 值
@@ -225,15 +226,15 @@ function token2utoken()
 
 function token2token()
 {
-   daoapi.IADD.tokenTotokenEvent(maxData[6], async obj => {
-       console.log(obj);
-       const {data}=obj
-       let sql = "call i_t2t(?,?,?,?,?,?,?,?,?,?,?)";
+   daoapi.IADD.tokenTotokenEvent(maxData[15], async obj => {
+      if(debugger_level==='0') console.log(obj);
+      const {data}=obj
+      let sql = "call i_t2t(?,?,?,?,?,?,?,?,?,?,?,?)";
       try{
-       //  let cost1 = await daoapi.IADD.getPool(data.data.fromTokenId); // 流动池中 dao 的当前币值（utoken）
-       //  let cost2 = await daoapi.IADD.getPool(data.data.toTokenId);// 流动池中 dao 的当前币值（utoken）
-         let params = [obj.blockNumber, data.fromTokenId, data.toTokenId, 0, 0, data.from, data.to, data.fromToken, data.toToken, data.swap_time,obj.transactionHash];
-         maxData[6] = obj.blockNumber; //缓存最后区块号
+         let cost1 = await daoapi.IADD.getPool(data.fromTokenId); // 流动池中 dao 的当前币值（utoken）
+         let cost2 = await daoapi.IADD.getPool(data.toTokenId);// 流动池中 dao 的当前币值（utoken）
+         let params = [obj.blockNumber, data.fromTokenId, data.toTokenId, cost1, cost2, data.from, data.to, data.fromToken, data.toToken, data.swap_time,obj.transactionHash,data.gas];
+         maxData[15] = obj.blockNumber; //缓存最后区块号
          executeSql(sql, params);
          token_cost(data.toTokenId, data.to); //统计个人当前的token 值
          token_cost(data.fromTokenId, data.from); //统计个人当前的token 值
@@ -247,12 +248,13 @@ function eth2token()
    daoapi.IADD.ETHToDaoToken(maxData[6],async obj => {
        if(debugger_level==='0') console.log(obj);
        const {data}=obj
-       let sql = "INSERT INTO t_e2t (block_num,from_address,to_address,in_amount,out_amount,swap_time,tran_hash,token_id,utoken_cost) VALUES(?,?,?,?,?,?,?,?,?)";
+       let sql = "INSERT INTO t_e2t (block_num,from_address,to_address,in_amount,out_amount,swap_time,tran_hash,token_id,utoken_cost,swap_gas) VALUES(?,?,?,?,?,?,?,?,?,?)";
        try{
            let cost = await daoapi.IADD.getPool(data.tokenId); // 流动池中 dao 的当前币值（utoken）
-           let params = [obj.blockNumber, data['from'],  data['to'], data['input_amount'],data['output_amount'],data['swap_time'],obj.transactionHash,data.tokenId,cost.utoken];
+           let params = [obj.blockNumber, data['from'],  data['to'], data['input_amount'],data['output_amount'],data['swap_time'],obj.transactionHash,data.tokenId,cost,data['gas']];
            maxData[6] = obj.blockNumber; //缓存最后区块号
            executeSql(sql, params);
+           token_cost(data.tokenId, data.from); //统计个人当前的token 值
        }catch(e){console.error(e)}
    })
 }
@@ -262,9 +264,9 @@ function eth2utoken()
    daoapi.UnitToken.swapEvent(maxData[7], obj => {
        if(debugger_level==='0') console.log(obj);
        const {data}=obj
-       let sql = "call i_swap(?,?,?,?,?,?)";
+       let sql = "call i_swap(?,?,?,?,?,?,?)";
        try{
-           let params = [obj.blockNumber, data['address'], data['swapTime'], data['ethAmount'], data['utokenAmount'],obj.transactionHash];
+           let params = [obj.blockNumber, data['address'], data['swapTime'], data['ethAmount'], data['utokenAmount'],obj.transactionHash,data['gas']];
            maxData[7] = obj.blockNumber; //缓存最后区块号
            executeSql(sql, params);
        }catch(e){console.error(e)}

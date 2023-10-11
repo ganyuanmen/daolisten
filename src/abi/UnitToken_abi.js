@@ -402,11 +402,11 @@ const UnitToken_abi={abi:[
     "inputs": [
       {
         "internalType": "address",
-        "name": "ethereum_foundation",
+        "name": "gas_token",
         "type": "address"
       }
     ],
-    "name": "controlEthereumFounddation",
+    "name": "controlGasToken",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -415,11 +415,11 @@ const UnitToken_abi={abi:[
     "inputs": [
       {
         "internalType": "address",
-        "name": "gas_token",
+        "name": "_hayekFund",
         "type": "address"
       }
     ],
-    "name": "controlGasToken",
+    "name": "controlHayekFounddation",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -483,19 +483,6 @@ const UnitToken_abi={abi:[
       }
     ],
     "name": "eth_usdcs",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "ethereumFoundation",
     "outputs": [
       {
         "internalType": "address",
@@ -592,6 +579,19 @@ const UnitToken_abi={abi:[
   },
   {
     "inputs": [],
+    "name": "hayekFund",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "highestPriceInHistory",
     "outputs": [
       {
@@ -672,7 +672,13 @@ const UnitToken_abi={abi:[
     "type": "function"
   },
   {
-    "inputs": [],
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_hayekFund",
+        "type": "address"
+      }
+    ],
     "name": "init_proxy2",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -680,11 +686,6 @@ const UnitToken_abi={abi:[
   },
   {
     "inputs": [
-      {
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      },
       {
         "internalType": "uint256",
         "name": "amount",
