@@ -2,20 +2,20 @@ const ethers=require('ethers')
 class Utils{
 
 
-  async getCheckEvent(ethersProvider,eventIface,eventName,transactionHash)
-  {
-    let res=await ethersProvider.getTransactionReceipt(transactionHash)
-    if(!res) res=await ethersProvider.getTransactionReceipt(transactionHash)
-    let lok=false
-    for(let i=0;i<res.logs.length;i++)
+    async getCheckEvent(ethersProvider,eventIface,eventName,transactionHash)
     {
-      try{
-           let findLog=eventIface.decodeEventLog(eventName, res.logs[i].data, res.logs[i].topics)
-          if(findLog) {lok=true; break;}
-      } catch(e){}
+      let res=await ethersProvider.getTransactionReceipt(transactionHash)
+      if(!res) res=await ethersProvider.getTransactionReceipt(transactionHash)
+      let lok=false
+      for(let i=0;i<res.logs.length;i++)
+      {
+        try{
+             let findLog=eventIface.decodeEventLog(eventName, res.logs[i].data, res.logs[i].topics)
+            if(findLog) {lok=true; break;}
+        } catch(e){}
+      }
+      return {gasUsed:res.gasUsed,isOk:lok};
     }
-    return {gasUsed:res.gasUsed,isOk:lok};
-  }
 
    async getTime(web3,blockNumber)
     {
@@ -32,10 +32,6 @@ class Utils{
     {
        let obj=await  web3.eth.getTransactionReceipt(transactionHash)
        if(!obj) obj=await  web3.eth.getTransactionReceipt(transactionHash)
-    //    console.log("-------------------------0000000000000000000000---------")
-    //     console.log(obj.logs[0].topics)
-    //     console.log("------------------------888888888888888888888888----------")
-      // if(obj && obj.gasUsed && obj.effectiveGasPrice) return obj.gasUsed*parseFloat(web3.utils.fromWei(obj.effectiveGasPrice+'','gwei'))
        return obj.gasUsed
     }
 
@@ -50,9 +46,9 @@ class Utils{
         return _from;
     }
 
-    valueFactory(obj,data,event)
+    valueFactory(obj,data)
     {
-        const {address,blockHash,blockNumber,transactionHash,transactionIndex}=obj
+        const {address,blockHash,blockNumber,transactionHash,transactionIndex,event}=obj
         return {address,blockHash,blockNumber,transactionHash,transactionIndex,data,event}
     }
 

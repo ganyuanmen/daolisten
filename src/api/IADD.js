@@ -1,40 +1,28 @@
-const iadd_abi=require('../abi/_IADD_abi');
+const iadd_abi=require('../abi/_IADD_abi.json');
 const utils = require("../utils");
-const ethers=require('ethers')
+
 /**
  * IADD 兑换事件
  */
 class IADD
 {
-    get eventIface()
-    {
-        if(!this.iface) this.iface = new  ethers.Interface(iadd_abi.abi)
-        return this.iface
-    }
         //utoken 兑换 token事件 
     utokenTotokenEvent(maxBlockNumber,callbackFun) {
         const _this = this;
         if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address, {from: this.account});
-        this.u2tObj=this.contract.events.UnitTokenToDaoToken({filter: {},fromBlock: maxBlockNumber+1},
-            async function (_error, data) {
+        this.u2tObj=this.contract.events.UnitTokenToSCToken({filter: {},fromBlock: maxBlockNumber})
+        this.u2tObj.on('data',async function (data,_error) {
                 if(!data || !data.returnValues) {utils.log("utokenTotokenEvent error");throw _error;}
-                
-                let eventData=await utils.getCheckEvent(_this.ethersProvider,_this.eventIface,'ETHToDaoToken', data.transactionHash)    
-                if(!eventData.isOk) eventData=await utils.getCheckEvent(_this.ethersProvider,_this.eventIface,'DaoTokenToDaoToken', data.transactionHash)    
-                if(!eventData.isOk)
-                callbackFun.call(null,utils.valueFactory(data,{
-                        "from": data.returnValues.spender, //兑换人
-                        "to": data.returnValues.to, //目标人
-                        "swap_time":await utils.getTime(_this.web3,data.blockNumber), //兑换时间戳
-                        "tokenId":data.returnValues.id,
-                        "utokenWei":data.returnValues.input_amount,
-                        "tokenWei":data.returnValues.output_amount,
-                        "utoken":(parseFloat(_this.web3.utils.fromWei(data.returnValues.input_amount,'ether'))/(998/1000)).toFixed(6),
-                        "gas":await utils.gas(_this.web3,data.transactionHash),
-                        "token":parseFloat(_this.web3.utils.fromWei(data.returnValues.output_amount,'ether')).toFixed(6)
-                    },
-                    "utokenTotokenEvent")
-                )
+                _this.u2tAr.push({fn:callbackFun,data:utils.valueFactory(data,{
+                            "from": data.returnValues.spender, //兑换人
+                            "to": data.returnValues.to, //目标人
+                            "tokenId":data.returnValues.id,
+                            "utokenWei":data.returnValues.input_amount,
+                            "tokenWei":data.returnValues.output_amount,
+                            "utoken":(parseFloat(_this.web3.utils.fromWei(data.returnValues.input_amount,'ether'))/(998/1000)).toFixed(6),
+                            "token":parseFloat(_this.web3.utils.fromWei(data.returnValues.output_amount,'ether')).toFixed(6)
+                        })
+                })
             }
         )
     }
@@ -43,25 +31,20 @@ class IADD
     tokenToUtokenEvent(maxBlockNumber,callbackFun) {
         const _this = this;
         if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address, {from: this.account});
-        this.t2uObj=this.contract.events.DaoTokenToUnitToken({filter: {}, fromBlock: maxBlockNumber+1}, 
-            async function (_error, data) {  
+        this.t2uObj=this.contract.events.SCTokenToUnitTokenEvent({filter: {}, fromBlock: maxBlockNumber})
+        this.t2uObj.on('data', async function (data,_error) {  
                 if(!data || !data.returnValues) {utils.log("tokenToUtokenEvent error");throw _error;}   
-                let eventData=await utils.getCheckEvent(_this.ethersProvider,_this.eventIface,'DaoTokenToDaoToken', data.transactionHash)    
-                if(!eventData.isOk)
-                    callbackFun.call(null,utils.valueFactory(data,
-                        {
-                            "from": data.returnValues.spender,
-                            "to": data.returnValues.to,
-                            "swap_time":await utils.getTime(_this.web3,data.blockNumber),
-                            "tokenId":data.returnValues.id,
-                            "utokenWei":data.returnValues.output_amount,
-                            "tokenWei":data.returnValues.input_amount,
-                            "utoken":parseFloat(_this.web3.utils.fromWei(data.returnValues.output_amount,'ether')).toFixed(6),
-                            "token":parseFloat(_this.web3.utils.fromWei(data.returnValues.input_amount,'ether')).toFixed(6),
-                            "gas":eventData.gasUsed
-                        },
-                        "tokenToUtokenEvent")
-                    )
+                _this.t2uAr.push({fn:callbackFun,data:utils.valueFactory(data,{
+                    "from": data.returnValues.spender,
+                    "to": data.returnValues.to,
+                    "tokenId":data.returnValues.id,
+                    "utokenWei":data.returnValues.output_amount,
+                    "tokenWei":data.returnValues.input_amount,
+                    "utoken":parseFloat(_this.web3.utils.fromWei(data.returnValues.output_amount,'ether')).toFixed(6),
+                    "token":parseFloat(_this.web3.utils.fromWei(data.returnValues.input_amount,'ether')).toFixed(6)
+                    })
+                 })
+
             }
         )
     }
@@ -70,25 +53,20 @@ class IADD
      tokenTotokenEvent(maxBlockNumber,callbackFun) {
         const _this = this;
         if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address, {from: this.account});
-        this.t2uObj=this.contract.events.DaoTokenToDaoToken({filter: {}, fromBlock: maxBlockNumber+1}, 
-            async function (_error, data) {  
+        this.t2uObj=this.contract.events.SCTokenToSCTokenEvent({filter: {}, fromBlock: maxBlockNumber})
+        this.t2uObj.on('data', async function (data,_error) {  
                 if(!data || !data.returnValues) {utils.log("tokenTotokenEvent error");throw _error;}   
-            
-                callbackFun.call(null,utils.valueFactory(data,
-                    {
-                        "from": data.returnValues.spender,
-                        "to": data.returnValues.to,
-                        "swap_time":await utils.getTime(_this.web3,data.blockNumber),
-                        "fromTokenId":data.returnValues.id_A,
-                        "toTokenId":data.returnValues.id_B,
-                        "fromtokenWei":data.returnValues.input_amount,
-                        "toTokenWei":data.returnValues.output_amount,
-                        "fromToken":parseFloat(_this.web3.utils.fromWei(data.returnValues.input_amount,'ether')).toFixed(6),
-                        "toToken":parseFloat(_this.web3.utils.fromWei(data.returnValues.output_amount,'ether')).toFixed(6),
-                        "gas":await utils.gas(_this.web3,data.transactionHash)
-                    },
-                    "tokenTotokenEvent")
-                )
+                _this.t2tAr.push({fn:callbackFun,data:utils.valueFactory(data,{
+                    "from": data.returnValues.spender,
+                    "to": data.returnValues.to,
+                    "fromTokenId":data.returnValues.id_A,
+                    "toTokenId":data.returnValues.id_B,
+                    "fromtokenWei":data.returnValues.input_amount,
+                    "toTokenWei":data.returnValues.output_amount,
+                    "fromToken":parseFloat(_this.web3.utils.fromWei(data.returnValues.input_amount,'ether')).toFixed(6),
+                    "toToken":parseFloat(_this.web3.utils.fromWei(data.returnValues.output_amount,'ether')).toFixed(6)
+                    })
+                 })
             }
         )
     }
@@ -97,21 +75,17 @@ class IADD
     ETHToDaoToken(maxBlockNumber,callbackFun) {
         const _this = this;
         if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address, {from: this.account});
-        this.t2tObj=this.ethtotokenObj=this.contract.events.ETHToDaoToken({filter: {}, fromBlock: maxBlockNumber+1},
-            async function (_error, data) {  
-                if(!data || !data.returnValues) {utils.log("ETHToDaoToken error");throw _error;}   
-                callbackFun.call(null,utils.valueFactory(data, 
-                    {
-                        "from": data.returnValues.spender,
-                        "to": data.returnValues.to,
-                        "tokenId":data.returnValues.id,
-                        "swap_time":await utils.getTime(_this.web3,data.blockNumber),
-                        "input_amount":parseFloat(_this.web3.utils.fromWei(data.returnValues.input_amount,'ether')).toFixed(6),
-                        "output_amount":parseFloat(_this.web3.utils.fromWei(data.returnValues.output_amount,'ether')).toFixed(6),
-                        "gas":await utils.gas(_this.web3,data.transactionHash)
-                    },
-                    "ETHToDaoToken")
-                )
+        this.t2tObj=this.ethtotokenObj=this.contract.events.ETHToSCToken({filter: {}, fromBlock: maxBlockNumber})
+        this.t2tObj.on('data', async function (data,_error) {  
+                if(!data || !data.returnValues) {utils.log("ETHToSCToken error");throw _error;}   
+                _this.e2tAr.push({fn:callbackFun,data:utils.valueFactory(data,{
+                    "from": data.returnValues.spender,
+                    "to": data.returnValues.to,
+                    "tokenId":data.returnValues.id,
+                    "input_amount":parseFloat(_this.web3.utils.fromWei(data.returnValues.input_amount,'ether')).toFixed(6),
+                    "output_amount":parseFloat(_this.web3.utils.fromWei(data.returnValues.output_amount,'ether')).toFixed(6)
+                    })
+                 })
             }
         )
     }
@@ -152,12 +126,17 @@ class IADD
         }catch(e){console.error(e);}
     }
 
-    constructor(_web3,_account,_address,_ethersProvider) {
+    constructor(_web3,_account,_address) {
+        this.running=false
         this.web3=_web3;
         this.account=_account;
         this.address=_address;
-        this.abi=iadd_abi.abi
-        this.ethersProvider=_ethersProvider
+        this.abi=iadd_abi
+        this.u2tAr=[]
+        this.t2tAr=[]
+        this.t2uAr=[]
+        this.e2tAr=[]
+      
        }
    }
    

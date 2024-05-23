@@ -1,5 +1,5 @@
 
-const getInfo_abi = require('../abi/GetInfos_abi');
+const abi = require('../abi/GetInfos_abi.json');
 
  // 获取数据, 减少http请求
 class GetInfos {
@@ -10,7 +10,7 @@ class GetInfos {
     */
     async getDaoInfo(_daoId) {
         this.genegateContract()
-        return await this.contract.methods.getDaoInfo(_daoId).call({ from: this.account })
+        return await this.contract.methods.getSCInfo(_daoId).call({ from: this.account })
     }
 
     /** 获取 dao 的成员及票权
@@ -38,7 +38,7 @@ class GetInfos {
         this.web3 = _web3;
         this.account = _account;
         this.address =_address;
-        this.abi = getInfo_abi.abi
+        this.abi = abi
     }
 }
 

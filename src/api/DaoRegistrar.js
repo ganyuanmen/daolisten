@@ -1,5 +1,5 @@
 const utils = require("../utils");
-const register_abi=require('../abi/DaoRegistrar_abi');
+const abi=require('../abi/SCRegistrar_abi.json');
 
 //dao注册事件
 class DaoRegistrar
@@ -7,34 +7,34 @@ class DaoRegistrar
     //dao 注册事件
     daoCreateEvent(maxBlockNumber,callbackFun) {
         const _this = this;
-        if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address, { from: this.account });
-        this.installobj=this.contract.events.CreateDao({filter: {},fromBlock: maxBlockNumber+1}, 
-            async function (_error, data) {
+        if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address);
+        this.installobj=this.contract.events.CreateSC({filter: {},fromBlock: maxBlockNumber});
+        this.installobj.on('data', async function (data,_error) {
                 if(!data || !data.returnValues) {utils.log("daoCreateEvent error:"+_error);throw _error;}
-                const dao_id=data['returnValues']['dao_id']
-                //console.log(dao_id+"-------------------------------------")
-                const _info=await  _this.infos.getDaoInfo(dao_id)
-                
-                const _accounts_votes= await _this.infos.getAccount_Votes(dao_id)
-                callbackFun.call(null,utils.valueFactory(data,
-                    {
-                        "daoId": dao_id,
-                        "manager":_info[0]['manager'], //管理员
-                        // "isToken":_info[0]['hasToken'], // 是否发布token
-                        "name":_info[0]['name'], //dao 名称 
-                        "symbol":_info[0]['symbol'], // dao 符号
-                        "describe":_info[0]['desc'], // dao 描述
-                        "accounts_votes":_accounts_votes, //成员及票权
-                        "creator":_info[1],
-                        "delegator":_info[2]['delegator'],
-                        "time":await utils.getTime(_this.web3,data.blockNumber),
-                        "address":_info[1] //执行人
-                    },
-                "daoCreateEvent")
-                )
+                _this.har.push({fn:callbackFun,data:utils.valueFactory(data,{
+                    "daoId": data['returnValues']['SC_id'],
+                    })
+                })
             }
         )
     }
+
+     //dao 注册事件
+     updateSCEvent(maxBlockNumber,callbackFun) {
+        const _this = this;
+        if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address);
+        this.installobj=this.contract.events.UpdateSC({filter: {},fromBlock: maxBlockNumber});
+        this.installobj.on('data', async function (data,_error) {
+                if(!data || !data.returnValues) {utils.log("daoCreateEvent error:"+_error);throw _error;}
+                _this.daotoken.har.push({fn:callbackFun,data:utils.valueFactory(data,{
+                    "daoId": data['returnValues']['SC_id'],
+                    "newCreator": data['returnValues']['newCreator']
+                    })
+                 })
+            }
+        )
+    }
+
 
    unsub()
    {
@@ -44,12 +44,12 @@ class DaoRegistrar
        } catch(e){console.error(e);}
    }
 
-    constructor(_web3,_account,_infos,_address) {
+    constructor(_web3,_address,_daotoken) {
         this.web3=_web3;
-        this.infos=_infos;
-        this.account=_account;     
         this.address=_address;
-        this.abi=register_abi.abi
+        this.abi=abi
+        this.har=[]
+        this.daotoken=_daotoken
     }
 }
 module.exports=DaoRegistrar
