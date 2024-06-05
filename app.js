@@ -44,7 +44,7 @@ async function daoListenStart() {
 function hand() {
     //Obtain the maximum block number that needs to be monitored from the database
    let sql = 'SELECT IFNULL(MAX(block_num),0)+1 s FROM t_dao'  //0 
-        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_changelogo'  //1 作废
+        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_createversion'  //1 
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_changelogo' //2
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_token'  //3
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_u2t'  //4
@@ -130,6 +130,7 @@ function listen_attach()
 {
    // setLogo()   //setlogo 创建dao logo 事件
    updateSCEvent()
+   addCreatorCEvent()
    addProEvent()   //addProEvent 创建提案事件
    voteEvent()
    getDividendEvent() //提取分红
@@ -451,6 +452,19 @@ function updateSCEvent()
    });
 }
 
+function addCreatorCEvent()
+{
+   server1.daoapi.DaoRegistrar.addCreatorCEvent(maxData[1], (obj) => {
+       if(process.env.IS_DEBUGGER==='1') console.log(obj)
+     const {data}=obj
+     let sql ="INSERT INTO t_createversion(block_num,dao_id,creator,dao_version,_time) VALUES(?,?,?,?,?) ";
+     try {
+         let params = [obj.blockNumber,data['daoId'],data['newCreator'],data['SC_Version'],data['timestamp']];
+         maxData[1] = obj.blockNumber+1n;  //Cache last block number
+         executeSql(sql, params); 
+     } catch (e) {console.error(e);}
+   });
+}
 
 
 

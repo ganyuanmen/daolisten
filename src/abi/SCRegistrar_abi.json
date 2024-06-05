@@ -92,6 +92,31 @@
         "internalType": "uint256",
         "name": "SC_id",
         "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "SC_Version",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newCreator",
+        "type": "address"
+      }
+    ],
+    "name": "AddCreator",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "SC_id",
+        "type": "uint256"
       }
     ],
     "name": "CreateSC",
@@ -444,6 +469,25 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "SC_id",
+        "type": "uint256"
+      }
+    ],
+    "name": "getCreators",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
       }
     ],
     "stateMutability": "view",
