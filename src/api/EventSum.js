@@ -84,13 +84,12 @@ class EventSum
         this.execobj5=this.contract.events.AccountDividendRight({filter: {}, fromBlock: maxBlockNumber})
         this.execobj5.on('data',async function (data,_error) {
                 if(!data || !data.returnValues) {utils.log("AccountDividendRight error");throw _error;}
-                callbackFun.call(null,utils.valueFactory(data,
-                    {
-                        "delegator": data.returnValues['emiter'], 
-                        "account":data.returnValues['account'], 
-                        "dividendRights":data.returnValues['dividendRights']
+                _this.har3.push({fn:callbackFun,data:utils.valueFactory(data,{
+                    "delegator": data.returnValues['emiter'], 
+                    "account":data.returnValues['account'], 
+                    "dividendRights":data.returnValues['dividendRights']
                     })
-                ) 
+                 })  
             }
         )
     }
@@ -123,6 +122,7 @@ class EventSum
         this.har=[]
         this.har1=[]
         this.har2=[]
+        this.har3=[]
     }
 }
 

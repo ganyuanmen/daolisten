@@ -9,6 +9,7 @@ const EventSum = require('./api/EventSum');
 const Domain=require("./api/Domain")
 const Daismnft=require("./api/Daismnft")
 const UnitNFT=require("./api/UnitNFT")
+const Daismnftsing=require("./api/Daismnftsing")
 const ethers=require('ethers')
 const utils = require("./utils");
 const abiDecoder = require('abi-decoder'); // NodeJS
@@ -49,8 +50,8 @@ class DaoApi {
             _data.data.data.cool_time=_info[5]
             _data.data.data.time=await utils.getTime(this.web3,_data.data.blockNumber)
             _data.data.data.address=_info[1] //执行人
-            const logo=await this.DaoLogo.getLogo(dao_id)
-            _data.data.data.src=logo.src //执行人
+             const logo=await this.DaoLogo.getLogo(dao_id)
+             _data.data.data.src=logo.src //执行人
 
             const _contract = new this.web3.eth.Contract(f_abi, _info[1]);
             let _owner= await _contract.methods.ownerOf(_info[1]).call({ from: this.account })
@@ -59,19 +60,15 @@ class DaoApi {
             
         }
 
-        
-        // //addLogoEvent 
-        // while(this.DaoLogo.har.length)
-        // {
-        //     let _data=this.DaoLogo.har.shift();
-        //     let res=await this.DaoLogo.daoLogoConfigs(_data.data.data.img_id)
-        //     let _info=await this.DaoLogo.logoStorages(res.logoStorage)
+        //成员变动
+        while(this.EventSum.har3.length)
+        {
+            let _data=this.EventSum.har3.shift();
+            _data.data.data.daoId=await this.DaoRegistrar.proxyTo(_data.data.data['delegator'])
+
+            await this.runAsync(_data.fn,_data.data)
             
-        //     _data.data.data.src=await this.DaoLogo.get_async_file(_info.fileType,_info.fileContent,_data.data.data.img_id)
-        //     _data.data.data._time=await utils.getTime(this.web3,_data.data.blockNumber)
-        //     await this.runAsync(_data.fn,_data.data)
-            
-        // }
+        }
         
 
         //publishTolen ////NFT
@@ -159,7 +156,7 @@ class DaoApi {
         {
             let _data=this.EventSum.har1.shift();
             const parasObj=await this.web3.eth.getTransaction(_data.data.transactionHash);  
-            console.log(parasObj)       
+            // console.log(parasObj)       
             _data.data.data.creator=parasObj.from
             await this.runAsync(_data.fn,_data.data)
             
@@ -181,7 +178,7 @@ class DaoApi {
         {
             let _data=this.DaoLogo.har.shift();
             let res=await this.DaoLogo.getLogoByDaoId(_data.data.data.daoId)
-            _data.data.data.src=await this.DaoLogo.get_async_file(res.fileType,res.fileContent,_data.data.data.daoId)
+            _data.data.data.src=await this.DaoLogo.get_async_file(res.fileContent,_data.data.data.daoId)
             _data.data.data._time=await utils.getTime(this.web3,_data.data.blockNumber)
             await this.runAsync(_data.fn,_data.data)
             
@@ -210,6 +207,13 @@ class DaoApi {
         this.IADD.unsub();
         this.UnitToken.unsub();
         this.EventSum.unsub();
+        this.Domain.unsub();
+        this.DaismNft.unsub();
+        this.UnitNFT.unsub();
+        this.Daismnftsing.unsub();
+
+        
+
 
 
     } 
@@ -221,7 +225,7 @@ class DaoApi {
     }
  
    
-
+   
     get Domain() { if (!this.dao_domain_obj) this.dao_domain_obj = new Domain(this.web3, this.account,daismAddress['DAismDomain']); return this.dao_domain_obj; }
     get GetInfos() { if (!this.dao_getInfos_obj) this.dao_getInfos_obj = new GetInfos(this.web3, this.account,daismAddress['GetInfos']); return this.dao_getInfos_obj; }
   
@@ -257,10 +261,13 @@ class DaoApi {
         return this.dao_UnitNFT_obj; 
     }
 
+    get Daismnftsing() { if (!this.dao_Daismnftsing_obj) this.dao_Daismnftsing_obj = new Daismnftsing(this.web3, this.account,daismAddress['DAismSingleNFT'],this.DaoToken); 
+    return this.dao_Daismnftsing_obj; 
+}
+
     get EventSum() { if (!this.dao_eventSum_obj) this.dao_eventSum_obj = new EventSum(this.web3, this.account,daismAddress['SCEventEmit']); return this.dao_eventSum_obj; }
  
     constructor(_web3, _account,_network) {
-        console.log("-----------------------------------")
         this.web3 = _web3;
         this.running=false
         this.account = _account;

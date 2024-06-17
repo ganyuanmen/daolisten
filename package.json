@@ -17,7 +17,6 @@
     "dotenv": "^16.4.5",
     "ethers": "^6.12.1",
     "fs": "^0.0.1-security",
-    "jszip": "^3.7.1",
     "mysql2": "^3.9.1",
     "node-schedule": "^2.1.0",
     "web3": "^4.8.0"

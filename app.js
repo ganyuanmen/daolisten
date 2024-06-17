@@ -5,7 +5,6 @@ const mysql = require('mysql2');
 const dotenv=require('dotenv');
 const crypto = require('crypto');
 
-
 dotenv.config();
 
 const start_block=5867571n  //Start listening for block numbers
@@ -64,7 +63,9 @@ function hand() {
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_mintwithsvgtokenid'  //18 
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_mintwithsvgtips'  //19 
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_transfernft'  //20
-        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_updatedaocreator';  //21
+        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_updatedaocreator'  //21
+        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_nftsing';  //22
+        
 
         
         
@@ -105,11 +106,12 @@ function daoListen() {
   // updateVersion()  //升级
   // transfer()  // 转帐
 
-  mintWithSvgTemplateAndTips();
-  mintWithSvgTemplateId();
-//   mintWithSvgTokenId();
-  mintWithSvgTips();
   nfttransfer()
+  nftsing()  //批量mint nft
+   mintWithSvgTemplateAndTips();
+   mintWithSvgTemplateId();
+ //   mintWithSvgTokenId();
+   mintWithSvgTips();
 
 }
 
@@ -123,6 +125,8 @@ function listen_swap()
    eth2utoken() //eth to utoken eth 兑换 utoken
    domain()
    changeLogo() //chanelogo 修改 dao logo 事件
+ 
+
 
 }
 
@@ -220,10 +224,11 @@ function mintWithSvgTemplateAndTips()
        if(!data['isTemplate'])
          tokenSvg=await server1.daoapi.DaismNft.getTokenImageSvg(data['tokenId'])
          
-       let sql ="INSERT INTO dao_db.t_mintwithsvgtemplateandtips(block_num,daoId,to_address,tokenId,templateId,isPublic,isTemplate,_time,templatesvg,tokensvg) VALUES(?,?,?,?,?,?,?,?,?,?)";
+       let sql ="INSERT INTO dao_db.t_mintwithsvgtemplateandtips(block_num,daoId,to_address,tokenId,templateId,isPublic,isTemplate,_time,templatesvg,tokensvg,contract_address) VALUES(?,?,?,?,?,?,?,?,?,?,?)";
        try {
            let params = [obj.blockNumber,data['daoId'],data['to'],data['tokenId'],data['templateId'],data['isPublic']?1:0,data['isTemplate']?1:0,data['timestamp']
-           ,JSON.stringify(templateSvg),tokenSvg];
+           ,JSON.stringify(templateSvg),tokenSvg,server1.daoapi.DaismNft.address];
+           
            maxData[16] = obj.blockNumber+1n;  //Cache last block number
            executeSql(sql, params); //dao 信息
          // let _svg= [
@@ -237,6 +242,21 @@ function mintWithSvgTemplateAndTips()
    });
 }
 
+function nftsing()
+{
+ server1.daoapi.Daismnftsing.mintEvent(maxData[22], async (obj) => {
+      const {data}=obj
+      let tokenSvg=await server1.daoapi.DaoLogo.getLogoByDaoId(data['daoId'])
+      let sql ="INSERT INTO t_nftsing(block_num,dao_id,token_id,token_to,tokensvg,_time,contract_address) VALUES(?,?,?,?,?,?,?)";
+      try {
+          let params = [obj.blockNumber,data['daoId'],data['tokenId'],data['to'],tokenSvg[1],data['timestamp'], server1.daoapi.Daismnftsing.address];
+          maxData[22] = obj.blockNumber+1n;  //Cache last block number
+          executeSql(sql, params); //dao 信息
+      } catch (e) {console.error(e);}
+  });
+
+   
+}
 
 function mintWithSvgTemplateId()
 {
@@ -244,9 +264,9 @@ function mintWithSvgTemplateId()
        if(process.env.IS_DEBUGGER==='1') console.log(obj)
        const {data}=obj
        let tokenSvg=await server1.daoapi.DaismNft.getTokenImageSvg(data['tokenId'])
-       let sql ="INSERT INTO dao_db.t_mintwithsvgtemplateid(block_num,daoId,to_address,tokenId,templateId,_time,tokensvg) VALUES (?,?,?,?,?,?,?)";
+       let sql ="INSERT INTO dao_db.t_mintwithsvgtemplateid(block_num,daoId,to_address,tokenId,templateId,_time,tokensvg,contract_address) VALUES (?,?,?,?,?,?,?,?)";
        try {
-           let params = [obj.blockNumber,data['daoId'],data['to'],data['tokenId'],data['templateId'],data['timestamp'],tokenSvg];
+           let params = [obj.blockNumber,data['daoId'],data['to'],data['tokenId'],data['templateId'],data['timestamp'],tokenSvg,server1.daoapi.DaismNft.address];
            maxData[17] = obj.blockNumber+1n;  //Cache last block number
            executeSql(sql, params); //dao 信息
        } catch (e) {console.error(e);}
@@ -274,9 +294,9 @@ function mintWithSvgTips()
        if(process.env.IS_DEBUGGER==='1') console.log(obj)
        const {data}=obj
        let tokenSvg=await server1.daoapi.DaismNft.getTokenImageSvg(data['tokenId'])
-       let sql ="INSERT INTO dao_db.t_mintwithsvgtips(block_num,tokenId,templateId,_time,tokensvg) VALUES (?,?,?,?,?)";
+       let sql ="INSERT INTO dao_db.t_mintwithsvgtips(block_num,tokenId,templateId,_time,tokensvg,contract_address) VALUES (?,?,?,?,?,?)";
        try {
-          let params = [obj.blockNumber,data['tokenId'],data['templateId'],data['timestamp'],tokenSvg];
+          let params = [obj.blockNumber,data['tokenId'],data['templateId'],data['timestamp'],tokenSvg,server1.daoapi.DaismNft.address];
            maxData[19] = obj.blockNumber+1n;  //Cache last block number
            executeSql(sql, params); //dao 信息
        } catch (e) {console.error(e);}
@@ -396,19 +416,6 @@ function eth2utoken()
    })
 }
 
-// function setLogo()
-// {
-//    server1.daoapi.DaoLogo.setLogoEvent(maxData[1], obj => {
-//        const {data}=obj
-//        if(process.env.IS_DEBUGGER==='1') console.log(obj)
-//        let sql = "call i_setlogo(?,?,?,?)";
-//        try {
-//          let params = [data['daoId'], obj.blockNumber, data['timestamp'], data['src']];
-//          maxData[1] = obj.blockNumber+1n; //Cache last block number
-//          executeSql(sql, params);
-//       } catch (e) {console.error(e);}
-//    })
-// }
 
 function changeLogo()
 {
@@ -560,9 +567,9 @@ function accountDividendRight()
    server1.daoapi.EventSum.accountDividendRight(maxData[14],obj => {
        if(process.env.IS_DEBUGGER==='1') console.log(obj);
        const {data}=obj
-       let sql = "call i_daoaccount(?,?,?,?)";
+       let sql = "call i_daoaccount(?,?,?,?,?)";
        try{
-         let params = [obj.blockNumber, data['delegator'],data['account'],data['dividendRights']];
+         let params = [obj.blockNumber, data['delegator'],data['account'],data['dividendRights'],data['daoId']];
          maxData[14] = obj.blockNumber+1n; //Cache last block number
          executeSql(sql, params);
       }catch(e){console.error(e)}
@@ -577,9 +584,9 @@ function nfttransfer()
        const {data}=obj
        let tokenSvg=await server1.daoapi.UnitNFT.getTokenImageSvg(data['tokenId'])
 
-       let sql = "INSERT INTO t_transfernft(block_num,token_id,token_to,tokensvg,_time) VALUES(?,?,?,?,?)";
+       let sql = "INSERT INTO t_transfernft(block_num,token_id,token_to,tokensvg,_time,contract_address) VALUES(?,?,?,?,?,?)";
        try{
-         let params = [obj.blockNumber, data['tokenId'],data['to'],tokenSvg,data['timestamp']];
+         let params = [obj.blockNumber, data['tokenId'],data['to'],tokenSvg,data['timestamp'],server1.daoapi.UnitNFT.address];
          maxData[20] = obj.blockNumber+1n; //Cache last block number
          executeSql(sql, params);
       }catch(e){console.error(e)}

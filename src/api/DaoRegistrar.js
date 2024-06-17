@@ -52,6 +52,11 @@ class DaoRegistrar
         )
     }
 
+    async proxyTo(id) {
+        if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address);
+       return await this.contract.methods.proxyTo(id).call({ from: this.account });
+
+    }
 
    unsub()
    {

@@ -133,9 +133,9 @@
             "type": "string"
           },
           {
-            "internalType": "bytes",
+            "internalType": "string",
             "name": "fileContent",
-            "type": "bytes"
+            "type": "string"
           }
         ],
         "internalType": "struct File",
@@ -185,9 +185,9 @@
             "type": "string"
           },
           {
-            "internalType": "bytes",
+            "internalType": "string",
             "name": "fileContent",
-            "type": "bytes"
+            "type": "string"
           }
         ],
         "internalType": "struct File",
@@ -213,9 +213,9 @@
             "type": "string"
           },
           {
-            "internalType": "bytes",
+            "internalType": "string",
             "name": "fileContent",
-            "type": "bytes"
+            "type": "string"
           }
         ],
         "internalType": "struct File",
@@ -244,9 +244,9 @@
         "type": "string"
       },
       {
-        "internalType": "bytes",
+        "internalType": "string",
         "name": "fileContent",
-        "type": "bytes"
+        "type": "string"
       }
     ],
     "stateMutability": "view",
