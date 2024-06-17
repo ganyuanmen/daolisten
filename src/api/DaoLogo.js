@@ -22,11 +22,11 @@ const fs = require('fs');
 
     }
 
-    // async daoLogoConfigs(id) {
-    //     if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address, { from: this.account });
-    //     let re = await this.contract.methods.SCLogoConfigs(id).call({ from: this.account });
-    //     return re;
-    // }
+    async getLogoByConfigID(id) {
+        if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address, { from: this.account });
+        let re = await this.contract.methods.getLogoByConfigID(id).call({ from: this.account });
+        return re;
+    }
 
     // async logoStorages(id) {
     //     if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address, { from: this.account });

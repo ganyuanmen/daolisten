@@ -202,6 +202,37 @@
     "inputs": [
       {
         "internalType": "uint256",
+        "name": "SCLogoConfigID",
+        "type": "uint256"
+      }
+    ],
+    "name": "getLogoByConfigID",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "string",
+            "name": "fileType",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "fileContent",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct File",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
         "name": "SC_id",
         "type": "uint256"
       },

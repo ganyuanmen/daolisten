@@ -431,19 +431,19 @@ function changeLogo()
    })
 }
 
-function addLogoEvent()
-{
-   server1.daoapi.DaoLogo.addLogoEvent(maxData[12], (obj) => {
-       if(process.env.IS_DEBUGGER==='1') console.log(obj)
-     const {data}=obj
-     let sql ="INSERT INTO t_addlogo(block_num,img_id,dao_id,_time,dao_logo) VALUES(?,?,?,?,?)";
-     try {
-         let params = [obj.blockNumber,data['img_id'],data['dao_id'],data['_time'],data['src']];
-         maxData[12] = obj.blockNumber+1n;  //Cache last block number
-         executeSql(sql, params); 
-     } catch (e) {console.error(e);}
-   });
-}
+// function addLogoEvent()
+// {
+//    server1.daoapi.DaoLogo.addLogoEvent(maxData[12], (obj) => {
+//        if(process.env.IS_DEBUGGER==='1') console.log(obj)
+//      const {data}=obj
+//      let sql ="INSERT INTO t_addlogo(block_num,img_id,dao_id,_time,dao_logo) VALUES(?,?,?,?,?)";
+//      try {
+//          let params = [obj.blockNumber,data['img_id'],data['dao_id'],data['_time'],data['src']];
+//          maxData[12] = obj.blockNumber+1n;  //Cache last block number
+//          executeSql(sql, params); 
+//      } catch (e) {console.error(e);}
+//    });
+// }
 
 function updateSCEvent()
 {
@@ -477,13 +477,23 @@ function addCreatorCEvent()
 
 function addProEvent()
 {
-   server1.daoapi.EventSum.addProposal(maxData[9],obj => {
+   server1.daoapi.EventSum.addProposal(maxData[9], async obj => {
        if(process.env.IS_DEBUGGER==='1') console.log(obj);
        const {data}=obj
-       let sql = "call i_pro(?,?,?,?,?,?,?)";
+       let imgstr=''
+       if(data['dividendRights']==1){
+         let b=data.account.slice(-10)
+        imgstr=await server1.daoapi.DaoLogo.getLogoByConfigID(parseInt(b))
+        console.log("----------------------------")
+        console.log(b,data.account)
+        console.log(imgstr)
+        console.log("----------------------------")
+       }
+
+       let sql = "call i_pro(?,?,?,?,?,?,?,?)";
        try{
          let params = [obj.blockNumber, data['delegator'],data['creator'],data['account'],data['dividendRights']
-         ,data['_time'],data['dao_desc']]; //_time 是block 操作时间戳=createTime
+         ,data['_time'],data['dao_desc'],imgstr[1]]; //_time 是block 操作时间戳=createTime
          maxData[9] = obj.blockNumber+1n; //Cache last block number
          executeSql(sql, params);
       }catch(e){console.error(e)}
