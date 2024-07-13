@@ -144,7 +144,6 @@ class DaoApi {
              const decodedData = abiDecoder.decodeMethod(parasObj.input)
              const [account,dividendRights,createTime,rights,antirights,dao_desc]=decodedData.params[0].value
              _data.data.data.creator=parasObj.from
-             _data.data.data.account=account
              _data.data.data.dividendRights=dividendRights
              _data.data.data.dao_desc=dao_desc
              await this.runAsync(_data.fn,_data.data)
@@ -226,7 +225,7 @@ class DaoApi {
  
    
    
-    get Domain() { if (!this.dao_domain_obj) this.dao_domain_obj = new Domain(this.web3, this.account,daismAddress['DAismDomain']); return this.dao_domain_obj; }
+   
     get GetInfos() { if (!this.dao_getInfos_obj) this.dao_getInfos_obj = new GetInfos(this.web3, this.account,daismAddress['GetInfos']); return this.dao_getInfos_obj; }
   
  
@@ -263,7 +262,9 @@ class DaoApi {
 
     get Daismnftsing() { if (!this.dao_Daismnftsing_obj) this.dao_Daismnftsing_obj = new Daismnftsing(this.web3, this.account,daismAddress['DAismSingleNFT'],this.DaoToken); 
     return this.dao_Daismnftsing_obj; 
-}
+    }
+    
+    get Domain() { if (!this.dao_domain_obj) this.dao_domain_obj = new Domain(this.web3, this.account,daismAddress['DAismDomain'],this.DaoToken); return this.dao_domain_obj; }
 
     get EventSum() { if (!this.dao_eventSum_obj) this.dao_eventSum_obj = new EventSum(this.web3, this.account,daismAddress['SCEventEmit']); return this.dao_eventSum_obj; }
  

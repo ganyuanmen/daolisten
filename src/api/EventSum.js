@@ -12,8 +12,10 @@ class EventSum
          this.execobj1=this.contract.events.AddProposal({filter: {}, fromBlock: maxBlockNumber}) 
          this.execobj1.on('data',async function (data,_error) {
                 if(!data || !data.returnValues) {utils.log("addProposal error");throw _error;}
+              
                 _this.har.push({fn:callbackFun,data:utils.valueFactory(data,{
                     "delegator": data.returnValues['emiter'],
+                    "account":data.returnValues['account'],
                     "_time":data.returnValues['_time']
                     })
                  })  

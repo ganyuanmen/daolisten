@@ -251,7 +251,32 @@
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "_scId",
+        "name": "scId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      }
+    ],
+    "name": "Mint",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "scId",
         "type": "uint256"
       },
       {
@@ -267,125 +292,7 @@
         "type": "uint256[][]"
       }
     ],
-    "name": "MintWithSvgBatchTokenId",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "_scId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "tokenId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "templateId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "isPublic",
-        "type": "bool"
-      },
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "isTemplate",
-        "type": "bool"
-      }
-    ],
-    "name": "MintWithSvgTemplateAndTips",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "_scId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "tokenId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "templateId",
-        "type": "uint256"
-      }
-    ],
-    "name": "MintWithSvgTemplateId",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "tokenId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "templateId",
-        "type": "uint256"
-      }
-    ],
-    "name": "MintWithSvgTips",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "_scId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "tokenId",
-        "type": "uint256"
-      }
-    ],
-    "name": "MintWithSvgTokenId",
+    "name": "MintBatch",
     "type": "event"
   },
   {
@@ -531,40 +438,33 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_templateId",
-        "type": "uint256"
-      }
-    ],
-    "name": "getSvgTemplate",
-    "outputs": [
-      {
-        "internalType": "string[]",
-        "name": "",
-        "type": "string[]"
-      },
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
         "name": "tokenId",
         "type": "uint256"
       }
     ],
-    "name": "getTokenImageSvg",
+    "name": "getNFT",
     "outputs": [
       {
-        "internalType": "string",
+        "components": [
+          {
+            "internalType": "string",
+            "name": "fileType",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "fileContent",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct IDAismInterface.File",
         "name": "",
-        "type": "string"
+        "type": "tuple"
+      },
+      {
+        "internalType": "string[]",
+        "name": "",
+        "type": "string[]"
       }
     ],
     "stateMutability": "view",
@@ -630,8 +530,32 @@
         "type": "uint256"
       },
       {
+        "internalType": "address",
+        "name": "_to",
+        "type": "address"
+      },
+      {
+        "internalType": "string[]",
+        "name": "_tips",
+        "type": "string[]"
+      }
+    ],
+    "name": "mint",
+    "outputs": [
+      {
         "internalType": "uint256",
-        "name": "_tokenId",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_scId",
         "type": "uint256"
       },
       {
@@ -640,153 +564,22 @@
         "type": "address[]"
       },
       {
-        "internalType": "uint256",
-        "name": "_num",
-        "type": "uint256"
-      },
-      {
         "internalType": "string[]",
         "name": "_tips",
         "type": "string[]"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_num",
+        "type": "uint256"
       }
     ],
-    "name": "mintWithSvgBatchByTokenId",
+    "name": "mintBatch",
     "outputs": [
       {
         "internalType": "uint256[][]",
         "name": "",
         "type": "uint256[][]"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_scId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "_to",
-        "type": "address"
-      },
-      {
-        "internalType": "string[]",
-        "name": "_svgSlice",
-        "type": "string[]"
-      },
-      {
-        "internalType": "string[]",
-        "name": "_tips",
-        "type": "string[]"
-      },
-      {
-        "internalType": "bool",
-        "name": "_isPublic",
-        "type": "bool"
-      }
-    ],
-    "name": "mintWithSvgTemplateAndTips",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_scId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_templateId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "_to",
-        "type": "address"
-      },
-      {
-        "internalType": "string[]",
-        "name": "_tips",
-        "type": "string[]"
-      }
-    ],
-    "name": "mintWithSvgTemplateId",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_tokenId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "string[]",
-        "name": "_tips",
-        "type": "string[]"
-      }
-    ],
-    "name": "mintWithSvgTips",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_scId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_tokenId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "_to",
-        "type": "address"
-      },
-      {
-        "internalType": "string[]",
-        "name": "_tips",
-        "type": "string[]"
-      }
-    ],
-    "name": "mintWithSvgTokenId",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
       }
     ],
     "stateMutability": "nonpayable",
@@ -845,25 +638,6 @@
         "internalType": "bytes32",
         "name": "",
         "type": "bytes32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "publicTemplateIds",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -985,36 +759,7 @@
         "type": "uint256"
       }
     ],
-    "name": "template2Svg",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bool",
-        "name": "isPublic",
-        "type": "bool"
-      },
-      {
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "tokenId2Template",
+    "name": "tokenId2ScId",
     "outputs": [
       {
         "internalType": "uint256",

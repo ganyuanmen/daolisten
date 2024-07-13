@@ -22,9 +22,9 @@ class Daismnftsing
 
   
 
-    async getTokenImageSvg(_id) {
+    async getNFT(_id) {
         if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address);
-        let res= await this.contract.methods.getTokenImageSvg(_id).call({ from: this.account })
+        let res= await this.contract.methods.getNFT(_id).call({ from: this.account })
        return res
     }
 
