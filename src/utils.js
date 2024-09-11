@@ -7,6 +7,9 @@ class Utils{
       let res=await ethersProvider.getTransactionReceipt(transactionHash)
       if(!res) res=await ethersProvider.getTransactionReceipt(transactionHash)
       let lok=false
+      // let events = res.logs.map((log) => eventIface.parseLog(log))
+      // console.log(events);
+
       for(let i=0;i<res.logs.length;i++)
       {
         try{
@@ -16,6 +19,29 @@ class Utils{
       }
       return {gasUsed:res.gasUsed,isOk:lok};
     }
+
+    
+    async getCheckEvent_logs(ethersProvider,transactionHash)
+    {
+      let res=await ethersProvider.getTransactionReceipt(transactionHash)
+      if(!res) res=await ethersProvider.getTransactionReceipt(transactionHash)
+      return res
+    }
+
+    
+    getCheckEvent_ex(res,eventIface,eventName)
+    {
+        let lok=false
+      for(let i=0;i<res.logs.length;i++)
+      {
+        try{
+             let findLog=eventIface.decodeEventLog(eventName, res.logs[i].data, res.logs[i].topics)
+            if(findLog) {lok=true; break;}
+        } catch(e){}
+      }
+      return {gasUsed:res.gasUsed,isOk:lok};
+    }
+
 
    async getTime(web3,blockNumber)
     {

@@ -242,6 +242,11 @@
             "internalType": "uint16",
             "name": "version",
             "type": "uint16"
+          },
+          {
+            "internalType": "string",
+            "name": "SCType",
+            "type": "string"
           }
         ],
         "internalType": "struct SCInfo",

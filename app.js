@@ -7,7 +7,7 @@ const crypto = require('crypto');
 
 dotenv.config();
 
-const start_block=5867571n  //Start listening for block numbers
+const start_block=0n  //Start listening for block numbers
 var monitor = 0; //Restart every 10 minutes 
 
 //A websocket connection will report an error: 429 Too Many Requests, so there are three servers to listen to
@@ -16,6 +16,7 @@ var server1=new Server();
 
 var maxData = []; // Record the maximum block number that has been listened to
 
+console.log(process.env)
 const pool = mysql.createPool({
    host: process.env.MYSQL_HOST,
    user: process.env.MYSQL_USER,
@@ -43,28 +44,29 @@ async function daoListenStart() {
 function hand() {
     //Obtain the maximum block number that needs to be monitored from the database
    let sql = 'SELECT IFNULL(MAX(block_num),0)+1 s FROM t_dao'  //0 
-        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_createversion'  //1 
-        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_changelogo' //2
-        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_token'  //3
+        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_createversion'  //1 dapp 地址改变
+        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_changelogo' //2 logo 修改
+        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_token'  //3 发布代币 默认都 发布
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_u2t'  //4
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_t2u'  //5
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_e2t'  //6
         + ' union all SELECT IFNULL(MAX(block_num),0)+1 FROM t_eth_utoken' //7
-        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_proexcu'  //8
-        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_pro'  //9
-        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_provote'  //10
+        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_proexcu'  //8 执行提案
+        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_pro'  //9 提案
+        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_provote'  //10 提案投票
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_t2t'  //11
-        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_domain'  //12
+        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_nft_mint'  //12  mint smart common
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_getdaoutoken'  //13 分红
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_daoaccount'  //14 dao 成员
-        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_domain'  //15 domain 
+        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_domain'  //15 activitypub dao 帐号  
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_nft'  //16 
-        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_domainsing'  //17
+        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_domainsing'  //17 activitypub 个人帐号
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_nft'  //18 
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_nft'  //19 
-        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_transfernft'  //20
-        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_updatedaocreator'  //21
-        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_nftsing';  //22
+        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_nft_transfer'  //20 发布时mint nft
+        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_updatedaocreator'  //21 
+        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_nft_swap';  //22 打赏 mint nft
+        
         
 
         
@@ -97,6 +99,7 @@ function daoListen() {
   // hayek()
   // daofund()
   daoCreate() //创建dao事件处理
+  domainsing()  //个人社区帐号建立
 
   publishTolen()  // dao发布token事件
   // //以下的监听需要dao条件下才能处理，所以延迟监听
@@ -106,25 +109,32 @@ function daoListen() {
   // updateVersion()  //升级
   // transfer()  // 转帐
 
-  nfttransfer()
-  nftsing()  //批量mint nft
-  mintEvent();
-//   mintBatchEvent();
-
+  nfttransfer() // 发布mint nft
+  nftsing()  //打赏 mint nft
+  mintEvent();  //其它脚本mint 
+  mintSmartCommon(); //mint smart common
+  
 
 }
 
 function listen_swap()
 {
-   execEvent()
-   utoken2token()  //u2t token 兑换 token 事件
-   token2utoken()  //t2u token 兑换 utoken 事件
-   token2token() //t2t token 兑换 token 
-   eth2token() //eth to token eth 兑换 token
-   eth2utoken() //eth to utoken eth 兑换 utoken
-   domain()
-   domainsing()
+   domain()  //smart common 注册社区帐号
+
    changeLogo() //chanelogo 修改 dao logo 事件
+   execEvent()  //提案执行
+   eth2token() //eth to token eth 兑换 token
+   eth2tokenex()
+   token2token() //t2t token 兑换 token 
+   token2tokenex() 
+ 
+   utoken2token()  //u2t utoken 兑换 token 事件
+   utoken2tokenex()
+   token2utoken()  //t2u token 兑换 utoken 事件
+   token2utokenex()
+ 
+   eth2utoken() //eth to utoken eth 兑换 utoken
+
  
 
 
@@ -218,7 +228,7 @@ function domainsing()
   server1.daoapi.Domain.recordInfoEvent(maxData[17], (obj) => {
       if(process.env.IS_DEBUGGER==='1') console.log(obj)
       const {data}=obj
-      if(process.env.LOCAL_DOMAIN===data['domain'].toLowerCase()) { //只保存本域名
+      // if(process.env.LOCAL_DOMAIN===data['domain'].toLowerCase()) { //只保存本域名
          let sql ="insert into t_domainsing(block_num,addr,domain,nick_name,pubkey,privkey,_time) values(?,?,?,?,?,?,?)";
          crypto.generateKeyPair('rsa', {
             modulusLength: 512,
@@ -237,7 +247,7 @@ function domainsing()
                   executeSql(sql, params); 
             } catch (e) {console.error(e);}
          });
-      }
+      // }
 
      
    });
@@ -252,7 +262,7 @@ function mintEvent()
        let tokenSvg=await server1.daoapi.DaismNft.getNFT(data['tokenId'])
        let sql ="INSERT INTO t_nft(block_num,dao_id,token_id,token_to,tokensvg,_time,contract_address,tips) VALUES(?,?,?,?,?,?,?,?)";
        try {
-           let params = [obj.blockNumber,data['daoId'],data['tokenId'],data['to'],tokenSvg[0][1],data['timestamp'], server1.daoapi.DaismNft.address,JSON.stringify(tokenSvg[1])];
+           let params = [obj.blockNumber,data['daoId'],data['tokenId'],data['to'],tokenSvg[0][1],data['timestamp'], server1.daoapi.DaismNft.address,tokenSvg[1].join(',')];
            maxData[16] = obj.blockNumber+1n;  //Cache last block number
            executeSql(sql, params); //dao 信息
        } catch (e) {console.error(e);}
@@ -266,9 +276,9 @@ function nftsing()
    if(process.env.IS_DEBUGGER==='1') console.log(obj)
       const {data}=obj
       let tokenSvg=await server1.daoapi.DaoLogo.getLogoByDaoId(data['daoId'])
-      let sql ="INSERT INTO t_nftsing(block_num,dao_id,token_id,token_to,tokensvg,_time,contract_address) VALUES(?,?,?,?,?,?,?)";
+      let sql ="INSERT INTO t_nft_swap(block_num,dao_id,token_id,token_to,tokensvg,_time,contract_address,utoken) VALUES(?,?,?,?,?,?,?,?)";
       try {
-          let params = [obj.blockNumber,data['daoId'],data['tokenId'],data['to'],tokenSvg[1],data['timestamp'], server1.daoapi.Daismnftsing.address];
+          let params = [obj.blockNumber,data['daoId'],data['tokenId'],data['to'],tokenSvg[1],data['timestamp'], server1.daoapi.Daismnftsing.address,data['utokenAmount']];
           maxData[22] = obj.blockNumber+1n;  //Cache last block number
           executeSql(sql, params); //dao 信息
       } catch (e) {console.error(e);}
@@ -277,62 +287,15 @@ function nftsing()
    
 }
 
-// function mintBatchEvent()
-// {
-//   server1.daoapi.DaismNft.mintBatchEvent(maxData[17], async (obj) => {
-//        if(process.env.IS_DEBUGGER==='1') console.log(obj)
-//        const {data}=obj
-//        let tokenSvg=await server1.daoapi.DaismNft.getTokenImageSvg(data['tokenId'])
-//        let sql ="INSERT INTO dao_db.t_mintwithsvgtemplateid(block_num,daoId,to_address,tokenId,templateId,_time,tokensvg,contract_address) VALUES (?,?,?,?,?,?,?,?)";
-//        try {
-//            let params = [obj.blockNumber,data['daoId'],data['to'],data['tokenId'],data['templateId'],data['timestamp'],tokenSvg,server1.daoapi.DaismNft.address];
-//            maxData[17] = obj.blockNumber+1n;  //Cache last block number
-//            executeSql(sql, params); //dao 信息
-//        } catch (e) {console.error(e);}
-//    });
-// }
-
-// function mintWithSvgTokenId()
-// {
-//   server1.daoapi.DaismNft.mintWithSvgTokenId(maxData[18], async (obj) => {
-//        if(process.env.IS_DEBUGGER==='1') console.log(obj)
-//        const {data}=obj
-//        let tokenSvg=await server1.daoapi.DaismNft.getTokenImageSvg(data['tokenId'])
-//        let sql ="INSERT INTO t_mintwithsvgtokenid(block_num,daoId,to_address,tokenId,_time,tokensvg) VALUES(?,?,?,?,?,?)";
-//        try {
-//            let params = [obj.blockNumber,data['daoId'],data['to'],data['tokenId'],data['timestamp'],tokenSvg];
-//            maxData[19] = obj.blockNumber+1n;  //Cache last block number
-//            executeSql(sql, params); //dao 信息
-//        } catch (e) {console.error(e);}
-//    });
-// }
-
-// function mintWithSvgTips()
-// {
-//   server1.daoapi.DaismNft.mintWithSvgTips(maxData[19],async (obj) => {
-//        if(process.env.IS_DEBUGGER==='1') console.log(obj)
-//        const {data}=obj
-//        let tokenSvg=await server1.daoapi.DaismNft.getTokenImageSvg(data['tokenId'])
-//        let sql ="INSERT INTO dao_db.t_mintwithsvgtips(block_num,tokenId,templateId,_time,tokensvg,contract_address) VALUES (?,?,?,?,?,?)";
-//        try {
-//           let params = [obj.blockNumber,data['tokenId'],data['templateId'],data['timestamp'],tokenSvg,server1.daoapi.DaismNft.address];
-//            maxData[19] = obj.blockNumber+1n;  //Cache last block number
-//            executeSql(sql, params); //dao 信息
-//        } catch (e) {console.error(e);}
-
-//    });
-// }
-
-
 
 function daoCreate()
 {
   server1.daoapi.DaoRegistrar.daoCreateEvent(maxData[0], (obj) => {
        if(process.env.IS_DEBUGGER==='1') console.log(obj)
        const {data}=obj
-       let sql ="INSERT INTO t_dao(dao_id,block_num,dao_name,dao_symbol,dao_desc,dao_manager,dao_time,dao_exec,creator,delegator,strategy,lifetime,cool_time,dao_logo,dapp_owner) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+       let sql ="INSERT INTO t_dao(sctype,dao_id,block_num,dao_name,dao_symbol,dao_desc,dao_manager,dao_time,dao_exec,creator,delegator,strategy,lifetime,cool_time,dao_logo,dapp_owner) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
        try {
-           let params = [data['daoId'],obj.blockNumber,data['name'],data['symbol'],data['describe'],data['manager']
+           let params = [data['sctype'],data['daoId'],obj.blockNumber,data['name'],data['symbol'],data['describe'],data['manager']
            ,data['time'],data['address'],data['creator'],data['delegator'],data['strategy'],data['lifetime'],data['cool_time'],data['src'],data['dapp_owner']];
            maxData[0] = obj.blockNumber+1n;  //Cache last block number
            executeSql(sql, params); //dao 信息
@@ -354,72 +317,110 @@ function publishTolen()
    })
 }
 
-function utoken2token()
+
+async function geneU2t(obj)
 {
-   server1.daoapi.IADD.utokenTotokenEvent(maxData[4], async obj => {
-       if(process.env.IS_DEBUGGER==='1') console.log(obj);
-       const {data}=obj
-       let sql = "call i_u2t(?,?,?,?,?,?,?,?,?,?)";
-       try{
-         let cost = await server1.daoapi.IADD.getPool(data.tokenId); // 流动池中 dao 的当前币值（utoken）
-         let params = [obj.blockNumber, data['tokenId'], cost, data['from'], data['to'], data['utoken'], data['token'], data['swap_time'],obj.transactionHash,data['gas']];
-         maxData[4] = obj.blockNumber+1n; //Cache last block number
-         executeSql(sql, params);
-         token_cost(data.tokenId, data.to); //统计个人当前的token 值
-       }catch(e){console.error(e)}
-   })
+   if(process.env.IS_DEBUGGER==='1') console.log(obj);
+   const {data}=obj
+   let sql = "call i_u2t(?,?,?,?,?,?,?,?,?,?,?)";
+   try{
+     let cost = await server1.daoapi.IADD.getPool(data.tokenId); // 流动池中 dao 的当前币值（utoken）
+     let params = [obj.blockNumber, data['tokenId'], cost, data['from'], data['to'], data['utoken'], data['token'], data['swap_time'],obj.transactionHash,data['gas'],data['tipAmount']];
+     maxData[4] = obj.blockNumber+1n; //Cache last block number
+     executeSql(sql, params);
+     token_cost(data.tokenId, data.to); //统计个人当前的token 值
+   }catch(e){console.error(e)}
 }
 
-function token2utoken()
+function utoken2token(){
+   server1.daoapi.IADD.utokenTotokenEvent(maxData[4], async obj => {await geneU2t(obj)})
+}
+
+
+function utoken2tokenex(){
+   server1.daoapi.IADD_EX.utokenTotokenEvent(maxData[4], async obj => {await geneU2t(obj)})
+}
+
+
+async function geneT2U(obj)
 {
-   server1.daoapi.IADD.tokenToUtokenEvent(maxData[5], async obj => {
-       if(process.env.IS_DEBUGGER==='1') console.log(obj);
+   if(process.env.IS_DEBUGGER==='1') console.log(obj);
        const {data}=obj
-       let sql = "call i_t2u(?,?,?,?,?,?,?,?,?,?)";
+       let sql = "call i_t2u(?,?,?,?,?,?,?,?,?,?,?)";
        try{
         let cost = await server1.daoapi.IADD.getPool(data.tokenId);// 流动池中 dao 的当前币值（utoken）
-         let params = [obj.blockNumber, data['tokenId'], cost, data['from'], data['to'], data['utoken'], data['token'], data['swap_time'],obj.transactionHash,data['gas']];
+         let params = [obj.blockNumber, data['tokenId'], cost, data['from'], data['to'], data['utoken'], data['token'], data['swap_time'],obj.transactionHash,data['gas'],data['tipAmount']];
          maxData[5] = obj.blockNumber+1n; //Cache last block number
          executeSql(sql, params);
          token_cost(data.tokenId, data.from);  //统计个人当前的token 值
        }catch(e){console.error(e)}
-   })
+}
+
+function token2utoken(){
+   server1.daoapi.IADD.tokenToUtokenEvent(maxData[5], async obj => { await geneT2U(obj)})
+}
+
+
+function token2utokenex(){
+   server1.daoapi.IADD_EX.tokenToUtokenEvent(maxData[5], async obj => { await geneT2U(obj)})
+}
+
+
+async function geneT2t(obj)
+{
+   const {data}=obj
+   let sql = "call i_t2t(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+   try{
+      let cost1 = await server1.daoapi.IADD.getPool(data.fromTokenId); // 流动池中 dao 的当前币值（utoken）
+      let cost2 = await server1.daoapi.IADD.getPool(data.toTokenId);// 流动池中 dao 的当前币值（utoken）
+      let params = [obj.blockNumber, data.fromTokenId, data.toTokenId, cost1, cost2, data.from, data.to, data.fromToken, data.toToken, data.swap_time,obj.transactionHash,data.gas,data.tipAmount,data.sc_id];
+      maxData[11] = obj.blockNumber+1n; //Cache last block number
+      executeSql(sql, params);
+      token_cost(data.toTokenId, data.to); //统计个人当前的token 值
+      token_cost(data.fromTokenId, data.from); //统计个人当前的token 值
+   }catch(e){console.log(e)}
 }
 
 function token2token()
 {
    server1.daoapi.IADD.tokenTotokenEvent(maxData[11], async obj => {
       if(process.env.IS_DEBUGGER==='1') console.log(obj);
-      const {data}=obj
-      let sql = "call i_t2t(?,?,?,?,?,?,?,?,?,?,?,?)";
-      try{
-         let cost1 = await server1.daoapi.IADD.getPool(data.fromTokenId); // 流动池中 dao 的当前币值（utoken）
-         let cost2 = await server1.daoapi.IADD.getPool(data.toTokenId);// 流动池中 dao 的当前币值（utoken）
-         let params = [obj.blockNumber, data.fromTokenId, data.toTokenId, cost1, cost2, data.from, data.to, data.fromToken, data.toToken, data.swap_time,obj.transactionHash,data.gas];
-         maxData[11] = obj.blockNumber+1n; //Cache last block number
-         executeSql(sql, params);
-         token_cost(data.toTokenId, data.to); //统计个人当前的token 值
-         token_cost(data.fromTokenId, data.from); //统计个人当前的token 值
-      }catch(e){console.log(e)}
-
+      await geneT2t(obj)
    })
 }
 
-function eth2token()
+
+function token2tokenex()
 {
-   server1.daoapi.IADD.ETHToDaoToken(maxData[6],async obj => {
-       if(process.env.IS_DEBUGGER==='1') console.log(obj);
-       const {data}=obj
-       let sql = "INSERT INTO t_e2t (block_num,from_address,to_address,in_amount,out_amount,swap_time,tran_hash,token_id,utoken_cost,swap_gas) VALUES(?,?,?,?,?,?,?,?,?,?)";
-       try{
-           let cost = await server1.daoapi.IADD.getPool(data.tokenId); // 流动池中 dao 的当前币值（utoken）
-           let params = [obj.blockNumber, data['from'],  data['to'], data['input_amount'],data['output_amount'],data['swap_time'],obj.transactionHash,data.tokenId,cost,data['gas']];
-           maxData[6] = obj.blockNumber+1n; //Cache last block number
-           executeSql(sql, params);
-           token_cost(data.tokenId, data.from); //统计个人当前的token 值
-       }catch(e){console.error(e)}
+   server1.daoapi.IADD_EX.tokenTotokenEvent(maxData[11], async obj => {
+      if(process.env.IS_DEBUGGER==='1') console.log(obj);
+      await geneT2t(obj)
    })
 }
+
+async function geneE2t(obj)
+{
+   if(process.env.IS_DEBUGGER==='1') console.log(obj);
+   const {data}=obj
+   let sql = "INSERT INTO t_e2t (block_num,from_address,to_address,in_amount,out_amount,swap_time,tran_hash,token_id,utoken_cost,swap_gas,tipAmount) VALUES(?,?,?,?,?,?,?,?,?,?,?)";
+   try{
+       let cost = await server1.daoapi.IADD.getPool(data.tokenId); // 流动池中 dao 的当前币值（utoken）
+       let params = [obj.blockNumber, data['from'],  data['to'], data['input_amount'],data['output_amount'],data['swap_time'],obj.transactionHash,data.tokenId,cost,data['gas'],data['tipAmount']];
+       maxData[6] = obj.blockNumber+1n; //Cache last block number
+       executeSql(sql, params);
+       token_cost(data.tokenId, data.from); //统计个人当前的token 值
+   }catch(e){console.error(e)}
+}
+
+function eth2token(){
+   server1.daoapi.IADD.ETHToDaoToken(maxData[6],async obj => {await geneE2t(obj)})
+}
+
+
+function eth2tokenex(){
+   server1.daoapi.IADD_EX.ETHToDaoToken(maxData[6],async obj => {await geneE2t(obj)})
+}
+
 
 function eth2utoken()
 {
@@ -449,19 +450,29 @@ function changeLogo()
    })
 }
 
-// function addLogoEvent()
-// {
-//    server1.daoapi.DaoLogo.addLogoEvent(maxData[12], (obj) => {
-//        if(process.env.IS_DEBUGGER==='1') console.log(obj)
-//      const {data}=obj
-//      let sql ="INSERT INTO t_addlogo(block_num,img_id,dao_id,_time,dao_logo) VALUES(?,?,?,?,?)";
-//      try {
-//          let params = [obj.blockNumber,data['img_id'],data['dao_id'],data['_time'],data['src']];
-//          maxData[12] = obj.blockNumber+1n;  //Cache last block number
-//          executeSql(sql, params); 
-//      } catch (e) {console.error(e);}
-//    });
-// }
+function mintSmartCommon()  // mint smart common
+{
+   server1.daoapi.Daismnftsing.mintBatchEvent(maxData[12], async (obj) => {
+      if(process.env.IS_DEBUGGER==='1') console.log(obj)
+         const {data}=obj
+      
+         let tokenSvg=await server1.daoapi.DaoLogo.getLogoByDaoId(data['daoId'])
+         let sql ="INSERT INTO t_nft_mint(block_num,dao_id,token_id,token_to,tokensvg,_time,contract_address) VALUES(?,?,?,?,?,?,?)";
+         let params ;
+         try {
+            data['to'].forEach((account,idx)=>{
+               data['tokenIds'][idx].forEach(token=>{
+                   params = [obj.blockNumber,data['daoId'],token,account,tokenSvg[1],data['timestamp'], server1.daoapi.Daismnftsing.address];
+                   executeSql(sql, params); //dao 信息
+               })
+             
+            })
+            maxData[12] = obj.blockNumber+1n;  //Cache last block number
+         } catch (e) {console.error(e);}
+         
+     });
+   
+}
 
 function updateSCEvent()
 {
@@ -547,21 +558,26 @@ function execEvent()
          executeSql(sql, params);
          const flag=parseInt(data['dividendRights']);
          //Modify dao description / Modify dao manager
-         if(flag===2 || flag===3 || data['account']==='0x0000000000000000000000000000000000000000')  
+         if(flag===2 || flag===3|| flag===4 || data['account']==='0x0000000000000000000000000000000000000000')  
          {
             promisePool.query("select dao_id from t_dao where delegator=?",[data['delegator']]).then(rows=>{
                   if(rows.length && rows[0].length) {
                   const dao_id=rows[0][0].dao_id;
                   server1.daoapi.GetInfos.getDaoInfo(dao_id).then(res=>{
                   if(data['account']==='0x0000000000000000000000000000000000000000')
-                     promisePool.execute('update t_dao set strategy=? where dao_id=?',[res[3],dao_id]).catch(err=>{console.error('[update t_dao ERROR] - ', err.message)});
+                     promisePool.execute('update t_dao set strategy=? where dao_id=?',[res[3],dao_id]).catch(err=>{console.error('[update t_dao strategy ERROR] - ', err.message)});
                   else if(flag===2){
-                     promisePool.execute('update t_dao set dao_desc=? where dao_id=?',[res[0]['desc'],dao_id]).catch(err=>{console.error('[update t_dao ERROR] - ', err.message)});
+                     promisePool.execute('update t_dao set dao_desc=? where dao_id=?',[res[0]['desc'],dao_id]).catch(err=>{console.error('[update t_dao dao_desc ERROR] - ', err.message)});
                      promisePool.execute('update a_account set account_desc=? where dao_id=?',[res[0]['desc'],dao_id]).catch(err=>{console.error('[update a_account ERROR] - ', err.message)});
                   }
                   else if(flag===3 )
-                     promisePool.execute('update t_dao set dao_manager=? where dao_id=?',[res[0]['manager'],dao_id]).catch(err=>{console.error('[update t_dao ERROR] - ', err.message)});
-                  })  
+                     promisePool.execute('update t_dao set dao_manager=? where dao_id=?',[res[0]['manager'],dao_id]).catch(err=>{console.error('[update t_dao manager ERROR] - ', err.message)});
+                  else if(flag===4 )
+                     promisePool.execute('update t_dao set sctype=? where dao_id=?',[res[0]['SCType'],dao_id]).catch(err=>{console.error('[update t_dao SCType ERROR] - ', err.message)});
+                  })
+                    
+
+                  
                }
             }).catch(err=>{console.error('[select t_dao ERROR] - ', err.message)})         
          }
@@ -604,7 +620,7 @@ function nfttransfer()
        const {data}=obj
        let tokenSvg=await server1.daoapi.UnitNFT.getTokenImageSvg(data['tokenId'])
 
-       let sql = "INSERT INTO t_transfernft(block_num,token_id,token_to,tokensvg,_time,contract_address) VALUES(?,?,?,?,?,?)";
+       let sql = "INSERT INTO t_nft_transfer(block_num,token_id,token_to,tokensvg,_time,contract_address) VALUES(?,?,?,?,?,?)";
        try{
          let params = [obj.blockNumber, data['tokenId'],data['to'],tokenSvg,data['timestamp'],server1.daoapi.UnitNFT.address];
          maxData[20] = obj.blockNumber+1n; //Cache last block number

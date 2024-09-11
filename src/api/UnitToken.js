@@ -16,7 +16,8 @@ const utils = require("../utils");
               _this.e2uAr.push({fn:callbackFun,data:utils.valueFactory(data,{
                     "address": data.returnValues[0], //兑换地址
                     "ethAmount":parseFloat(_this.web3.utils.fromWei(data.returnValues[1],'ether')).toFixed(6), 
-                    "utokenAmount":parseFloat(_this.web3.utils.fromWei(data.returnValues[2],'ether')).toFixed(6)
+                    "utokenAmount":parseFloat(data.returnValues[2])/100000000
+                    //parseFloat(_this.web3.utils.fromWei(data.returnValues[2],'ether')).toFixed(6)
                 })
              })
             }

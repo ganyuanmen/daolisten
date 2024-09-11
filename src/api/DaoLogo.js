@@ -79,7 +79,7 @@ const fs = require('fs');
                 let fn=`s_${daoid}.svg`
                 // _this.writeImage(daoid,Buffer.from(array.buffer).toString('base64'),fn)
                 _this.writeImage(daoid,bytesStr,fn)
-               resolve(`https://${process.env.LOCAL_DOMAIN}/uploads/logo/${fn}`)
+               resolve(`https://${process.env.LOCAL_DOMAIN}/${process.env.IMGDIRECTORY}/logo/${fn}`)
                // resolve('data:image/' + file_type + ';base64,' + Buffer.from(array.buffer).toString('base64'))
             // }
         });

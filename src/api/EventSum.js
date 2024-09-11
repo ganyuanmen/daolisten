@@ -16,6 +16,7 @@ class EventSum
                 _this.har.push({fn:callbackFun,data:utils.valueFactory(data,{
                     "delegator": data.returnValues['emiter'],
                     "account":data.returnValues['account'],
+                    "dividendRights":data.returnValues['dividendRights'],
                     "_time":data.returnValues['_time']
                     })
                  })  

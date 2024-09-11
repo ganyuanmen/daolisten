@@ -19,7 +19,8 @@ class IADD
                             "tokenId":data.returnValues.id,
                             "utokenWei":data.returnValues.input_amount,
                             "tokenWei":data.returnValues.output_amount,
-                            "utoken":(parseFloat(_this.web3.utils.fromWei(data.returnValues.input_amount,'ether'))/(998/1000)).toFixed(6),
+                            "tipAmount":0,
+                            "utoken":(parseFloat(data.returnValues.input_amount)/100000000/(998/1000)).toFixed(6),
                             "token":parseFloat(_this.web3.utils.fromWei(data.returnValues.output_amount,'ether')).toFixed(6)
                         })
                 })
@@ -40,7 +41,8 @@ class IADD
                     "tokenId":data.returnValues.id,
                     "utokenWei":data.returnValues.output_amount,
                     "tokenWei":data.returnValues.input_amount,
-                    "utoken":parseFloat(_this.web3.utils.fromWei(data.returnValues.output_amount,'ether')).toFixed(6),
+                    "tipAmount":0,
+                    "utoken":parseFloat(data.returnValues.output_amount)/100000000,
                     "token":parseFloat(_this.web3.utils.fromWei(data.returnValues.input_amount,'ether')).toFixed(6)
                     })
                  })
@@ -53,8 +55,8 @@ class IADD
      tokenTotokenEvent(maxBlockNumber,callbackFun) {
         const _this = this;
         if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address, {from: this.account});
-        this.t2uObj=this.contract.events.SCTokenToSCTokenEvent({filter: {}, fromBlock: maxBlockNumber})
-        this.t2uObj.on('data', async function (data,_error) {  
+        this.t2tObj=this.contract.events.SCTokenToSCTokenEvent({filter: {}, fromBlock: maxBlockNumber})
+        this.t2tObj.on('data', async function (data,_error) {  
                 if(!data || !data.returnValues) {utils.log("tokenTotokenEvent error");throw _error;}   
                 _this.t2tAr.push({fn:callbackFun,data:utils.valueFactory(data,{
                     "from": data.returnValues.spender,
@@ -63,6 +65,8 @@ class IADD
                     "toTokenId":data.returnValues.id_B,
                     "fromtokenWei":data.returnValues.input_amount,
                     "toTokenWei":data.returnValues.output_amount,
+                    "tipAmount":0,
+                    "sc_id":0,
                     "fromToken":parseFloat(_this.web3.utils.fromWei(data.returnValues.input_amount,'ether')).toFixed(6),
                     "toToken":parseFloat(_this.web3.utils.fromWei(data.returnValues.output_amount,'ether')).toFixed(6)
                     })
@@ -75,13 +79,14 @@ class IADD
     ETHToDaoToken(maxBlockNumber,callbackFun) {
         const _this = this;
         if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address, {from: this.account});
-        this.t2tObj=this.ethtotokenObj=this.contract.events.ETHToSCToken({filter: {}, fromBlock: maxBlockNumber})
-        this.t2tObj.on('data', async function (data,_error) {  
+        this.e2tObj=this.contract.events.ETHToSCToken({filter: {}, fromBlock: maxBlockNumber})
+        this.e2tObj.on('data', async function (data,_error) {  
                 if(!data || !data.returnValues) {utils.log("ETHToSCToken error");throw _error;}   
                 _this.e2tAr.push({fn:callbackFun,data:utils.valueFactory(data,{
                     "from": data.returnValues.spender,
                     "to": data.returnValues.to,
                     "tokenId":data.returnValues.id,
+                    "tipAmount":0,
                     "input_amount":parseFloat(_this.web3.utils.fromWei(data.returnValues.input_amount,'ether')).toFixed(6),
                     "output_amount":parseFloat(_this.web3.utils.fromWei(data.returnValues.output_amount,'ether')).toFixed(6)
                     })
@@ -120,9 +125,9 @@ class IADD
             if(this.u2tObj && this.u2tObj.unsubscribe){this.u2tObj.unsubscribe();}
             if(this.t2uObj && this.t2uObj.unsubscribe){this.t2uObj.unsubscribe();}
             if(this.t2tObj && this.t2tObj.unsubscribe){this.t2tObj.unsubscribe();}
-            if(this.ethtotokenObj && this.ethtotokenObj.unsubscribe){this.ethtotokenObj.unsubscribe();}
+            if(this.e2tObj && this.e2tObj.unsubscribe){this.e2tObj.unsubscribe();}
             
-            this.u2tObj=null;this.t2uObj=null;this.t2tObj=null;
+            this.u2tObj=null;this.t2uObj=null;this.t2tObj=null;this.e2tObj=null;
         }catch(e){console.error(e);}
     }
 
