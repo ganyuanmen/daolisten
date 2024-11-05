@@ -514,10 +514,10 @@ function addProEvent()
  
        }
 
-       let sql = "call i_pro(?,?,?,?,?,?,?,?)";
+       let sql = "call i_pro(?,?,?,?,?,?,?,?,?)";
        try{
          let params = [obj.blockNumber, data['delegator'],data['creator'],data['account'],data['dividendRights']
-         ,data['_time'],data['dao_desc'],imgstr && imgstr.fileContent?imgstr.fileContent:'']; //_time 是block 操作时间戳=createTime
+         ,data['_time'],data['dao_desc'],imgstr && imgstr.fileContent?imgstr.fileContent:'',,data['proposalType']]; //_time 是block 操作时间戳=createTime
          maxData[9] = obj.blockNumber+1n; //Cache last block number
          executeSql(sql, params);
       }catch(e){console.error(e)}
@@ -529,9 +529,9 @@ function voteEvent()
    server1.daoapi.EventSum.voteEvent(maxData[10],obj => {
        if(process.env.IS_DEBUGGER==='1') console.log(obj);
        const {data}=obj
-       let sql = "INSERT INTO t_provote(block_num,delegator,createTime,creator,antirights,rights,_time) VALUES(?,?,?,?,?,?,?)";
+       let sql = "INSERT INTO t_provote(block_num,delegator,createTime,creator,antirights,rights,_time,proposalType) VALUES(?,?,?,?,?,?,?,?)";
        try{
-         let params = [obj.blockNumber, data['delegator'],data['createTime'],data['creator'],data['antirights'],data['rights'],data['_time']];
+         let params = [obj.blockNumber, data['delegator'],data['createTime'],data['creator'],data['antirights'],data['rights'],data['_time'],data['proposalType']];
          maxData[10] = obj.blockNumber+1n; //Cache last block number
          executeSql(sql, params);
          let contract= new server1.web3.eth.Contract(daoabi, data['delegator'], { from: server1.account });
@@ -550,29 +550,32 @@ function execEvent()
    server1.daoapi.EventSum.execEvent(maxData[8], obj => {
        if(process.env.IS_DEBUGGER==='1') console.log(obj);
        const {data}=obj
-       let sql = "INSERT INTO t_proexcu(block_num,delegator,account,dividendRights,_time) VALUES(?,?,?,?,?)";
+       let sql = "INSERT INTO t_proexcu(block_num,delegator,account,dividendRights,_time,proposalType) VALUES(?,?,?,?,?,?)";
        try{
          
-         let params = [obj.blockNumber, data['delegator'],data['account'],data['dividendRights'],data['_time']];
+         let params = [obj.blockNumber, data['delegator'],data['account'],data['dividendRights'],data['_time'],data['proposalType']];
          maxData[8] = obj.blockNumber+1n; //Cache last block number
          executeSql(sql, params);
-         const flag=parseInt(data['dividendRights']);
-         //Modify dao description / Modify dao manager
-         if(flag===2 || flag===3|| flag===4 || data['account']==='0x0000000000000000000000000000000000000000')  
+         // const flag=parseInt(data['dividendRights']);
+         const flag=parseInt(data['proposalType']);
+         //1 修改logo , 不在这处理 
+        // if(flag===2 || flag===3|| flag===4 || data['account']==='0x0000000000000000000000000000000000000000')  
+        if(flag===2 || flag===3|| flag===4 || flag===0)  
          {
             promisePool.query("select dao_id from t_dao where delegator=?",[data['delegator']]).then(rows=>{
                   if(rows.length && rows[0].length) {
                   const dao_id=rows[0][0].dao_id;
                   server1.daoapi.GetInfos.getDaoInfo(dao_id).then(res=>{
-                  if(data['account']==='0x0000000000000000000000000000000000000000')
+                  // if(data['account']==='0x0000000000000000000000000000000000000000') //修改strategy
+                  if(flag===0)
                      promisePool.execute('update t_dao set strategy=? where dao_id=?',[res[3],dao_id]).catch(err=>{console.error('[update t_dao strategy ERROR] - ', err.message)});
-                  else if(flag===2){
+                  else if(flag===2){ //修改描述
                      promisePool.execute('update t_dao set dao_desc=? where dao_id=?',[res[0]['desc'],dao_id]).catch(err=>{console.error('[update t_dao dao_desc ERROR] - ', err.message)});
-                     promisePool.execute('update a_account set account_desc=? where dao_id=?',[res[0]['desc'],dao_id]).catch(err=>{console.error('[update a_account ERROR] - ', err.message)});
+                     promisePool.execute('update a_account set actor_desc=? where dao_id=?',[res[0]['desc'],dao_id]).catch(err=>{console.error('[update a_account ERROR] - ', err.message)});
                   }
-                  else if(flag===3 )
+                  else if(flag===3 ) //修改管理员
                      promisePool.execute('update t_dao set dao_manager=? where dao_id=?',[res[0]['manager'],dao_id]).catch(err=>{console.error('[update t_dao manager ERROR] - ', err.message)});
-                  else if(flag===4 )
+                  else if(flag===4 ) //修改智能公器类型
                      promisePool.execute('update t_dao set sctype=? where dao_id=?',[res[0]['SCType'],dao_id]).catch(err=>{console.error('[update t_dao SCType ERROR] - ', err.message)});
                   })
                     

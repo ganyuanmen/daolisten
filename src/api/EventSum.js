@@ -17,6 +17,7 @@ class EventSum
                     "delegator": data.returnValues['emiter'],
                     "account":data.returnValues['account'],
                     "dividendRights":data.returnValues['dividendRights'],
+                    "proposalType":data.returnValues['proposalType'],
                     "_time":data.returnValues['_time']
                     })
                  })  
@@ -34,6 +35,7 @@ class EventSum
                         "delegator": data.returnValues['emiter'], 
                         "antirights":data.returnValues['antirights'], 
                         "rights":data.returnValues['rights'], 
+                        "proposalType":data.returnValues['proposalType'],
                         "createTime":data.returnValues['_proposalTime'],
                         "_time":data.returnValues['_time']
                     })
@@ -53,7 +55,9 @@ class EventSum
                     {
                         "delegator": data.returnValues['emiter'], 
                         "dividendRights":data.returnValues['dividendRights'], 
-                        "account":data.returnValues['account'], 
+                        "account":data.returnValues['account'],
+                        "account":data.returnValues['account'],
+                        "proposalType": data.returnValues['proposalType'],
                         "_time":data.returnValues['_time']
                     })
                 )

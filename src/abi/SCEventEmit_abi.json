@@ -50,6 +50,12 @@
         "internalType": "uint16",
         "name": "dividendRights",
         "type": "uint16"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint16",
+        "name": "proposalType",
+        "type": "uint16"
       }
     ],
     "name": "AddProposal",
@@ -80,6 +86,12 @@
         "indexed": false,
         "internalType": "uint16",
         "name": "dividendRights",
+        "type": "uint16"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint16",
+        "name": "proposalType",
         "type": "uint16"
       }
     ],
@@ -155,6 +167,12 @@
         "internalType": "uint256",
         "name": "_proposalTime",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint16",
+        "name": "proposalType",
+        "type": "uint16"
       }
     ],
     "name": "Vote",
@@ -194,6 +212,11 @@
         "internalType": "uint16",
         "name": "dividendRights",
         "type": "uint16"
+      },
+      {
+        "internalType": "uint16",
+        "name": "proposalType",
+        "type": "uint16"
       }
     ],
     "name": "addProposal",
@@ -216,6 +239,11 @@
       {
         "internalType": "uint16",
         "name": "dividendRights",
+        "type": "uint16"
+      },
+      {
+        "internalType": "uint16",
+        "name": "proposalType",
         "type": "uint16"
       }
     ],
@@ -273,6 +301,11 @@
         "internalType": "uint256",
         "name": "_proposalTime",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint16",
+        "name": "proposalType",
+        "type": "uint16"
       }
     ],
     "name": "vote",
