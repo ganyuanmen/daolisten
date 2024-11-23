@@ -111,9 +111,9 @@ class IADD
     async getPool(_id) {
         if(!this.contract)  this.contract=new this.web3.eth.Contract(this.abi,this.address , {from: this.account});
         let result= await this.contract.methods.pools(_id).call({from: this.account});
-        let utoken= this.web3.utils.fromWei(result.unit_token_supply,'ether')
+        let utoken= parseFloat(result.unit_token_supply)/100000000;
         let token= this.web3.utils.fromWei(result.eip3712_supply,'ether')
-        let u=(parseFloat(utoken)/parseFloat(token)-0.01).toFixed(6)
+        let u=(utoken/parseFloat(token)-0.01).toFixed(6)
         return u
     
     }

@@ -5,9 +5,11 @@ const mysql = require('mysql2');
 const dotenv=require('dotenv');
 const crypto = require('crypto');
 
+
 dotenv.config();
 
-const start_block=0n  //Start listening for block numbers
+// const start_block=21232473n  //Start listening for block numbers
+const start_block=0n
 var monitor = 0; //Restart every 10 minutes 
 
 //A websocket connection will report an error: 429 Too Many Requests, so there are three servers to listen to
@@ -67,11 +69,6 @@ function hand() {
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_updatedaocreator'  //21 
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_nft_swap';  //22 打赏 mint nft
         
-        
-
-        
-        
-
 
    promisePool.query(sql,[]).then((rows)=>{
          rows[0].forEach(element => {maxData.push(element.s>start_block?element.s:start_block)});
