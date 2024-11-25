@@ -90,7 +90,7 @@ class IADD
                     "input_amount":parseFloat(_this.web3.utils.fromWei(data.returnValues.input_amount,'ether')).toFixed(6),
                     "output_amount":parseFloat(_this.web3.utils.fromWei(data.returnValues.output_amount,'ether')).toFixed(6)
                     })
-                 })
+                })
             }
         )
     }

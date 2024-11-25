@@ -111,7 +111,6 @@ function daoListen() {
   mintEvent();  //其它脚本mint 
   mintSmartCommon(); //mint smart common
   
-
 }
 
 function listen_swap()
