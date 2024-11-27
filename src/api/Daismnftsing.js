@@ -39,6 +39,27 @@ class Daismnftsing
         )
     }
 
+    mintBurnEvent(maxBlockNumber,callbackFun) {
+        const _this = this;
+        if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address);
+        this.installobj3=this.contract.events.MintBurn({filter: {},fromBlock: maxBlockNumber});
+        this.installobj3
+        .on('data', async function (data,_error) {
+                if(!data || !data.returnValues) {utils.log("MintBatchEvent error:"+_error);throw _error;}
+                _this.daotoken.har.push({fn:callbackFun,data:utils.valueFactory(data,{
+                    "daoId": data.returnValues.scId,
+                    "to": data.returnValues.to,
+                    "tokenId": data.returnValues.tokenId,
+                    "mark": data.returnValues.mark,
+                    "ethBurn": parseFloat(parseFloat(_this.web3.utils.fromWei(data.returnValues.ethBurn,'ether')).toFixed(6))
+                    })
+                 })
+            }
+        )
+    }
+
+ 
+
     async getNFT(_id) {
         if (!this.contract) this.contract = new this.web3.eth.Contract(this.abi, this.address);
         let res= await this.contract.methods.getNFT(_id).call({ from: this.account })
@@ -53,6 +74,8 @@ class Daismnftsing
            this.installobj1=null;
            if(this.installobj2 && this.installobj2.unsubscribe) {this.installobj2.unsubscribe();}
            this.installobj2=null;
+           if(this.installobj3 && this.installobj3.unsubscribe) {this.installobj3.unsubscribe();}
+           this.installobj3=null;
         
 
        } catch(e){console.error(e);}

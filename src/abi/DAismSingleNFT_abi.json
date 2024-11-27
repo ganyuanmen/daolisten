@@ -311,6 +311,43 @@
       {
         "indexed": false,
         "internalType": "uint256",
+        "name": "ethBurn",
+        "type": "uint256"
+      }
+    ],
+    "name": "MintBurn",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "scId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "mark",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
         "name": "utokenAmount",
         "type": "uint256"
       }
@@ -523,6 +560,11 @@
             "internalType": "string",
             "name": "mark",
             "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "ethBurn",
+            "type": "uint256"
           }
         ],
         "internalType": "struct DAismSingleNFT.TipsStorage",
@@ -636,6 +678,59 @@
       }
     ],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_recipient",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "_isMintNFT",
+        "type": "bool"
+      }
+    ],
+    "name": "mintByBurnETH",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_recipient",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "unit_token_output",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "_isMintNFT",
+        "type": "bool"
+      }
+    ],
+    "name": "mintByBurnETHExactUnitToken",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "payable",
     "type": "function"
   },
   {

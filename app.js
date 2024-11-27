@@ -63,7 +63,7 @@ function hand() {
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_domain'  //15 activitypub dao 帐号  
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_nft'  //16 
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_domainsing'  //17 activitypub 个人帐号
-        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_nft'  //18 
+        + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_nft_swaphonor'  //18 
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_nft'  //19 
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_nft_transfer'  //20 发布时mint nft
         + ' UNION ALL SELECT IFNULL(MAX(block_num),0)+1 FROM t_updatedaocreator'  //21 
@@ -106,10 +106,12 @@ function daoListen() {
   // updateVersion()  //升级
   // transfer()  // 转帐
 
-  nfttransfer() // 发布mint nft
-  nftsing()  //打赏 mint nft
-  mintEvent();  //其它脚本mint 
-  mintSmartCommon(); //mint smart common
+  //荣誉通证
+  nfttransfer() // 发布mint nft  UnitNFT  t_nft_transfer  0 
+  nftsing()  //打赏 mint nft  Daismnftsing  t_nft_swap 2 
+  mintEvent();  //其它脚本mint  DaismNft   t_nft  1  
+  mintBurnEvent()  //Daismnftsing  t_nft_swaphonor 4
+  mintSmartCommon(); //mint smart common  Daismnftsing  t_nft_mint  3
   
 }
 
@@ -256,15 +258,37 @@ function mintEvent()
        if(process.env.IS_DEBUGGER==='1') console.log(obj)
        const {data}=obj
        let tokenSvg=await server1.daoapi.DaismNft.getNFT(data['tokenId'])
+       
        let sql ="INSERT INTO t_nft(block_num,dao_id,token_id,token_to,tokensvg,_time,contract_address,tips) VALUES(?,?,?,?,?,?,?,?)";
        try {
            let params = [obj.blockNumber,data['daoId'],data['tokenId'],data['to'],tokenSvg[0][1],data['timestamp'], server1.daoapi.DaismNft.address,tokenSvg[1].join(',')];
+           
            maxData[16] = obj.blockNumber+1n;  //Cache last block number
            executeSql(sql, params); //dao 信息
        } catch (e) {console.error(e);}
 
    });
 }
+
+
+function mintBurnEvent()
+{
+  server1.daoapi.Daismnftsing.mintBurnEvent(maxData[18], async (obj) => {
+       if(process.env.IS_DEBUGGER==='1') console.log(obj)
+       const {data}=obj
+      if(parseInt(data['tokenId'])===0) return;
+
+       let tokenSvg=await server1.daoapi.Daismnftsing.getNFT(data['tokenId'])
+       let sql ="INSERT INTO t_nft_swaphonor(block_num,dao_id,token_id,token_to,tokensvg,_time,contract_address,tips) VALUES(?,?,?,?,?,?,?,?)";
+       try {
+           let params = [obj.blockNumber,data['daoId'],data['tokenId'],data['to'],tokenSvg[0][1],data['timestamp'], server1.daoapi.Daismnftsing.address,`ETH Forging(${data["ethBurn"]})ETH`];
+           maxData[18] = obj.blockNumber+1n;  //Cache last block number
+           executeSql(sql, params); //dao 信息
+       } catch (e) {console.error(e);}
+
+   });
+}
+
 
 function nftsing()
 {
